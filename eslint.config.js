@@ -13,6 +13,10 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.serviceworker, ...globals.webextensions } },
   },
   {
+    files: ['scripts/**/*.ts'],
+    languageOptions: { globals: { ...globals.node } },
+  },
+  {
     files: ['apps/extension/src/**/*.{ts,tsx}'],
     ignores: ['apps/extension/src/background/**'],
     languageOptions: { globals: { ...globals.browser, ...globals.webextensions } },
