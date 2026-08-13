@@ -84,6 +84,8 @@ importers:
 
   packages/catalog-snapshot: {}
 
+  packages/prereq-parser: {}
+
 packages:
 
   '@babel/code-frame@7.29.7':
