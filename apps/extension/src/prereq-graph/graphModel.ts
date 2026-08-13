@@ -98,11 +98,7 @@ function makeCourseNode(ctx: BuildCtx, code: string): PrereqFlowNode {
     geCodes: course?.geCodes ?? [],
     planned: ctx.plannedCodes.has(normalized),
     taken: ctx.takenCodes.has(normalized),
-    // `sourceUrl` isn't on CourseSnapshot in this worktree yet (added by a
-    // parallel change to packages/catalog-snapshot); read it defensively so
-    // this keeps working once that field lands, and degrades to "no link"
-    // (matching courses scraped before the field existed) until then.
-    sourceUrl: (course as (CourseSnapshot & { sourceUrl?: string }) | undefined)?.sourceUrl,
+    sourceUrl: course?.sourceUrl,
   }
   return { id, position: { x: 0, y: 0 }, data, type: 'course' }
 }
