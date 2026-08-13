@@ -32,9 +32,10 @@ export function parseSubjectIndexHtml(html: string): SubjectIndex {
   return { version: versionMatch[1], subjectSlugs: [...slugs] }
 }
 
+const BASE_URL = 'https://catalog.ucsc.edu'
 const COURSE_HEADER_START_RE = /<h2 class="course-name">/g
 const COURSE_HEADER_RE =
-  /<h2 class="course-name">\s*<a[^>]*>\s*<span>([\s\S]*?)<\/span>([\s\S]*?)<\/a>/
+  /<h2 class="course-name">\s*<a\s+href="([^"]*)"[^>]*>\s*<span>([\s\S]*?)<\/span>([\s\S]*?)<\/a>/
 const CREDITS_RE = /<div class="sc-credithours">[\s\S]*?<div class="credits">([\s\S]*?)<\/div>/
 const EXTRA_FIELDS_RE = /<div class="extraFields">([\s\S]*?)<\/div>/g
 const GEN_ED_RE = /<div class="genEd">([\s\S]*?)<\/div>/
@@ -70,9 +71,12 @@ function parseCourseChunk(chunk: string): ParsedCourse | null {
   const headerMatch = COURSE_HEADER_RE.exec(chunk)
   if (!headerMatch) return null
 
-  const code = htmlToText(headerMatch[1] ?? '')
-  const title = htmlToText(headerMatch[2] ?? '')
+  const href = headerMatch[1] ?? ''
+  const code = htmlToText(headerMatch[2] ?? '')
+  const title = htmlToText(headerMatch[3] ?? '')
   if (!code || !title) return null
+
+  const sourceUrl = href ? `${BASE_URL}${href}` : undefined
 
   const creditsMatch = CREDITS_RE.exec(chunk)
   const creditsDigits = creditsMatch ? /\d+/.exec(htmlToText(creditsMatch[1] ?? '')) : null
@@ -102,5 +106,5 @@ function parseCourseChunk(chunk: string): ParsedCourse | null {
       : []
   }
 
-  return { code, title, units, prereqRaw, geCodes }
+  return { code, title, units, prereqRaw, geCodes, sourceUrl }
 }

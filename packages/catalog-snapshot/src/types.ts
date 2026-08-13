@@ -7,6 +7,10 @@ export interface CourseSnapshot {
   prereqRaw: string
   /** GE codes this course satisfies, e.g. ["PE-T"] or ["CC", "ER"]; [] if none */
   geCodes: string[]
+  // ponytail: optional because the currently-bundled snapshot predates this field —
+  // undefined until the next scrape. Consumers must handle the missing case.
+  /** Absolute URL to this course's catalog entry, e.g. for prereq-graph node navigation */
+  sourceUrl?: string
   // ponytail: the catalog source page never exposes structured "terms offered"
   // data — always [] until a source that has it is wired in.
   termsOffered: string[]
