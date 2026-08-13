@@ -3,3 +3,5 @@ packages:
   - 'packages/*'
 minimumReleaseAgeExclude:
   - globals@17.10.0
+  - '@xyflow/react@12.11.3'
+  - '@xyflow/system@0.0.80'
