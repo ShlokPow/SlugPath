@@ -145,6 +145,7 @@ describe('parseSubjectPageHtml', () => {
       prereqRaw:
         'Prerequisite(s): score of 200 or higher on the mathematics placement examination (MPE), or MATH 2.',
       geCodes: ['MF'],
+      sourceUrl: 'https://catalog.ucsc.edu/en/current/general-catalog/courses/am-applied-mathematics/lower-division/am-3',
     })
 
     expect(courses[1]).toEqual({
@@ -153,6 +154,7 @@ describe('parseSubjectPageHtml', () => {
       units: 5,
       prereqRaw: 'Prerequisite(s): MATH 2 or mathematics placement examination (MPE) score of 200 or higher or higher.',
       geCodes: ['MF'],
+      sourceUrl: 'https://catalog.ucsc.edu/en/current/general-catalog/courses/am-applied-mathematics/lower-division/am-6',
     })
 
     // AM 107: crosslisted noise (<h4 class="crosslisted">) sits between the
@@ -165,6 +167,7 @@ describe('parseSubjectPageHtml', () => {
       prereqRaw:
         'Prerequisite(s): AM 112 or MATH 107 or PHYS 116C or EART 111.',
       geCodes: [],
+      sourceUrl: 'https://catalog.ucsc.edu/en/current/general-catalog/courses/am-applied-mathematics/upper-division/am-107',
     })
   })
 
@@ -177,6 +180,8 @@ describe('parseSubjectPageHtml', () => {
       units: 5,
       prereqRaw: '',
       geCodes: ['CC', 'ER'],
+      sourceUrl:
+        'https://catalog.ucsc.edu/en/current/general-catalog/courses/cres-critical-race-and-ethnic-studies/upper-division/cres-143',
     })
   })
 
@@ -189,6 +194,8 @@ describe('parseSubjectPageHtml', () => {
       units: 5,
       prereqRaw: '',
       geCodes: [],
+      sourceUrl:
+        'https://catalog.ucsc.edu/en/current/general-catalog/courses/cres-critical-race-and-ethnic-studies/lower-division/cres-25',
     })
   })
 
