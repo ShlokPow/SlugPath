@@ -14,8 +14,17 @@ export default defineManifest({
   host_permissions: ['*://*.ucsc.edu/*', 'https://www.googleapis.com/*'],
   content_scripts: [
     {
-      matches: ['https://catalog.ucsc.edu/*', 'https://my.ucsc.edu/*'],
+      matches: ['https://catalog.ucsc.edu/*'],
       js: ['src/content/index.tsx'],
+    },
+    {
+      // all_frames: MyUCSC (PeopleSoft) renders class-search results inside
+      // a nested target iframe, not the top-level document — the content
+      // script needs to run in every frame to reach it. index.tsx gates
+      // panel mounting to the top frame so this doesn't create duplicates.
+      matches: ['https://my.ucsc.edu/*'],
+      js: ['src/content/index.tsx'],
+      all_frames: true,
     },
   ],
   options_page: 'src/options/index.html',

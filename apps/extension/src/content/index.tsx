@@ -1,7 +1,9 @@
 import { createRoot, type Root } from 'react-dom/client'
 import { Panel } from './Panel'
+import { injectAddToPlanButtons } from './scheduleInjection'
 import { findCourseBlocks } from '../adapters/catalog'
 import { PrereqGraphPanel } from '../prereq-graph/PrereqGraphPanel'
+import { SchedulePanel } from '../schedule/SchedulePanel'
 
 // One host <div> + shadow root per mount point, per the isolation pattern
 // used throughout content-script UI: prevents page styles leaking in and
@@ -14,12 +16,33 @@ function createShadowMount(): { host: HTMLDivElement; root: Root } {
   return { host, root: createRoot(mountPoint) }
 }
 
-const { host: panelHost, root: panelRoot } = createShadowMount()
-document.documentElement.appendChild(panelHost)
-panelRoot.render(<Panel />)
+// MyUCSC's my.ucsc.edu content script runs in every frame (manifest.config.ts
+// sets all_frames: true there) because PeopleSoft renders class-search
+// results inside a nested target iframe, not the top-level document — this
+// is the standard way for a content script to reach into that iframe without
+// guessing its id. Panels must still only mount once per page, so UI mounting
+// is gated on being the top frame; injectAddToPlanButtons runs in every
+// frame and is a no-op wherever no results table exists.
+const isTopFrame = window.top === window
+
+if (isTopFrame) {
+  const { host: panelHost, root: panelRoot } = createShadowMount()
+  document.documentElement.appendChild(panelHost)
+  panelRoot.render(<Panel />)
+}
 
 if (location.hostname === 'catalog.ucsc.edu') {
   injectPrereqToggles()
+}
+
+if (location.hostname === 'my.ucsc.edu') {
+  if (isTopFrame) {
+    const { host: scheduleHost, root: scheduleRoot } = createShadowMount()
+    scheduleHost.style.cssText = 'position:fixed;top:16px;right:16px;z-index:2147483647;'
+    document.documentElement.appendChild(scheduleHost)
+    scheduleRoot.render(<SchedulePanel />)
+  }
+  void injectAddToPlanButtons(document)
 }
 
 /**
