@@ -15,6 +15,7 @@ describe('settingsStore', () => {
       catalogYear: '2025-2026',
       calendarLinked: true,
       defaultTerm: 'fall-2025',
+      activePlanId: 'plan-1',
     })
 
     expect(await getSettings()).toEqual({
@@ -22,6 +23,7 @@ describe('settingsStore', () => {
       catalogYear: '2025-2026',
       calendarLinked: true,
       defaultTerm: 'fall-2025',
+      activePlanId: 'plan-1',
     })
   })
 })
