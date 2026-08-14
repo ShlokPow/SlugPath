@@ -17,7 +17,12 @@ export function loadCatalog(): Promise<{ index: CatalogIndex; snapshot: CatalogS
 }
 
 async function fetchAndDecode(): Promise<{ index: CatalogIndex; snapshot: CatalogSnapshot }> {
-  const res = await fetch(snapshotUrl)
+  // Vite's `?url` import yields a path that resolves correctly from the
+  // extension's own pages (options/popup), but this runs inside a content
+  // script — there the page's origin (e.g. https://catalog.ucsc.edu) is what
+  // relative URLs resolve against, not the extension's. chrome.runtime.getURL
+  // gives the real chrome-extension://<id>/... URL regardless of context.
+  const res = await fetch(chrome.runtime.getURL(snapshotUrl))
   if (!res.body) throw new Error('loadCatalog: empty response body for bundled catalog snapshot')
   const text = await new Response(res.body.pipeThrough(new DecompressionStream('gzip'))).text()
   const snapshot = JSON.parse(text) as CatalogSnapshot
