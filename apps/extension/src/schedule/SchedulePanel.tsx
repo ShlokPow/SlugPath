@@ -1,12 +1,8 @@
 import { useMemo, type CSSProperties } from 'react'
 import { usePlans, useSettings } from '../storage/hooks'
-import { addSectionToPlan as _addSectionToPlan, createPlan, deletePlan, duplicatePlan, removeSectionFromPlan, renamePlan } from '../storage/planStore'
+import { createPlan, deletePlan, duplicatePlan, removeSectionFromPlan, renamePlan } from '../storage/planStore'
 import type { Plan, Section } from '../storage/types'
 import { findConflicts, sectionKey } from './conflicts'
-
-// re-exported so callers integrating "Add to plan" buttons elsewhere don't
-// need to reach into storage/planStore directly.
-export const addSectionToPlan = _addSectionToPlan
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 const GRID_START_MINUTE = 7 * 60
