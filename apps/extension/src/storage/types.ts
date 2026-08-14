@@ -11,6 +11,9 @@ export interface Section {
   meetingPattern: MeetingPattern[]
   instructor: string
   seatsOpen: number
+  // Sections picked together as one atomic unit (lecture+lab, cross-listings).
+  // Keys use the same `${courseCode} ${sectionNumber}` format as sectionKey().
+  linkedSectionKeys?: string[]
 }
 
 export interface Plan {
@@ -41,4 +44,5 @@ export interface Settings {
   catalogYear: string | null
   calendarLinked: boolean
   defaultTerm: string | null
+  activePlanId: string | null
 }

@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS: Settings = {
   catalogYear: null,
   calendarLinked: false,
   defaultTerm: null,
+  activePlanId: null,
 }
 
 export async function getSettings(): Promise<Settings> {
