@@ -14,15 +14,18 @@ export default defineManifest({
   host_permissions: ['*://*.ucsc.edu/*', 'https://www.googleapis.com/*'],
   content_scripts: [
     {
-      matches: ['https://catalog.ucsc.edu/*'],
-      js: ['src/content/index.tsx'],
-    },
-    {
-      // all_frames: MyUCSC (PeopleSoft) renders class-search results inside
-      // a nested target iframe, not the top-level document — the content
-      // script needs to run in every frame to reach it. index.tsx gates
-      // panel mounting to the top frame so this doesn't create duplicates.
-      matches: ['https://my.ucsc.edu/*'],
+      // Single entry, not split per-hostname: @crxjs/vite-plugin tracks
+      // web_accessible_resources matches for a content script keyed by its
+      // source filename, so two content_scripts entries pointing at the
+      // same file silently lose the first entry's matches (only the last
+      // one survives) — breaking the dynamic-import chunk load, and with it
+      // the whole content script, on whichever host got dropped.
+      // all_frames: true because MyUCSC (PeopleSoft) renders class-search
+      // results inside a nested target iframe, not the top-level document —
+      // the content script needs to run in every frame to reach it. It's a
+      // no-op on any extra frame catalog.ucsc.edu doesn't have, and
+      // index.tsx gates panel mounting to the top frame either way.
+      matches: ['https://catalog.ucsc.edu/*', 'https://my.ucsc.edu/*'],
       js: ['src/content/index.tsx'],
       all_frames: true,
     },
