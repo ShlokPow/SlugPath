@@ -11,6 +11,11 @@ export interface Section {
   meetingPattern: MeetingPattern[]
   instructor: string
   seatsOpen: number
+  // Other sections (by `${courseCode} ${sectionNumber}`) that must be picked
+  // together with this one and never flagged as conflicting with each other
+  // — cross-listed courses and lecture+lab pairs. Populated by the MyUCSC
+  // adapter from DOM grouping; absent/empty means "stands alone".
+  linkedSectionKeys?: string[]
 }
 
 export interface Plan {
@@ -41,4 +46,5 @@ export interface Settings {
   catalogYear: string | null
   calendarLinked: boolean
   defaultTerm: string | null
+  activePlanId: string | null
 }
