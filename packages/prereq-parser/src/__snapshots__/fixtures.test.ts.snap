@@ -6,8 +6,21 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "AM 3",
     "prereqRaw": "Prerequisite(s): score of 200 or higher on the mathematics placement examination (MPE), or MATH 2.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): score of 200 or higher on the mathematics placement examination (MPE), or MATH 2.",
+      "ast": {
+        "children": [
+          {
+            "child": null,
+            "detail": "placement exam score 200+",
+            "type": "constraint",
+          },
+          {
+            "code": "MATH 2",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
     },
   },
   {
@@ -1796,8 +1809,12 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "MATH 2S",
     "prereqRaw": "Prerequisite(s): mathematics placement (MP) score of 100 or higher.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): mathematics placement (MP) score of 100 or higher.",
+      "ast": {
+        "child": null,
+        "detail": "placement exam score 100+",
+        "type": "constraint",
+      },
+      "ok": true,
     },
   },
   {

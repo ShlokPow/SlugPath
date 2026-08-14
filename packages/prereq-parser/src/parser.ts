@@ -227,6 +227,10 @@ function parseLeadingAtom(tokens: Token[], idx: number, end: number): { node: Pr
     return { node: { type: 'constraint', detail: 'instructor permission', child: null }, next: idx + 1 }
   }
 
+  if (t.type === 'placementScore') {
+    return { node: { type: 'constraint', detail: `placement exam score ${t.value}+`, child: null }, next: idx + 1 }
+  }
+
   if (t.type === 'concurrent') {
     const next = tokens[idx + 1]
     if (next?.type === 'course') {

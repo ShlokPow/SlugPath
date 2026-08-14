@@ -12,6 +12,7 @@ export type TokenType =
   | 'gradePost'
   | 'orEquivalent'
   | 'permission'
+  | 'placementScore'
   | 'other'
 
 export interface Token {
@@ -32,6 +33,23 @@ const MATCHERS: { type: TokenType; re: RegExp; captureValue?: boolean }[] = [
   { type: 'gradePre', re: /([A-D][+-]?)\s+or\s+better\s+in\b/iy, captureValue: true },
   { type: 'gradePost', re: /with\s+(?:a\s+)?(?:grade\s+of\s+)?([A-D][+-]?)\s+or\s+better\b/iy, captureValue: true },
   { type: 'orEquivalent', re: /\(?or\s+equivalent(?:\/\w+)?\)?/iy },
+  // Placement-exam score as an alternative to a course (common on intro
+  // math/chem gateway courses — CSE 30, CHEM 1A, MATH 21, etc.): "score of
+  // 400 or higher on the mathematics placement examination (MPE)" and its
+  // reverse phrasing "mathematics placement examination (MPE) score of 400
+  // or higher" / "a math placement (MP) score of 400 or higher". The
+  // trailing `(?:\s+or\s+higher)?` absorbs a real catalog typo (AM 6 repeats
+  // "or higher or higher") without needing a special case for it.
+  {
+    type: 'placementScore',
+    re: /score\s+of\s+(\d+)\s+or\s+higher\s+on\s+the\s+(?:mathematics|math)\s+placement\s+(?:examination|exam|test)(?:\s*\([A-Z]+\))?(?:\s+or\s+higher)?/iy,
+    captureValue: true,
+  },
+  {
+    type: 'placementScore',
+    re: /(?:a\s+)?(?:mathematics|math)\s+placement\s*(?:examination|exam|test)?\s*(?:\([A-Z]+\))?\s*score\s+of\s+(\d+)\s+or\s+higher(?:\s+or\s+higher)?/iy,
+    captureValue: true,
+  },
   // "instructor permission" and its many phrasings — a very common non-course
   // alternative branch ("MATH 3 or by permission of the instructor").
   {

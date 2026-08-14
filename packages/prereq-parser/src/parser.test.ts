@@ -155,9 +155,48 @@ describe('parsePrereq — grammar features', () => {
     expect(parsePrereq(raw)).toEqual({ ok: false, raw })
   })
 
-  it('falls back on a non-course test-score alternative mixed into an OR chain', () => {
-    const raw = 'Prerequisite(s): MATH 2 or mathematics placement examination (MPE) score of 200 or higher.'
-    expect(parsePrereq(raw)).toEqual({ ok: false, raw })
+  it('parses a placement-exam-score alternative mixed into an OR chain, "placement exam first" phrasing', () => {
+    expect(parsePrereq('Prerequisite(s): MATH 2 or mathematics placement examination (MPE) score of 200 or higher.')).toEqual({
+      ok: true,
+      ast: { type: 'or', children: [course('MATH 2'), { type: 'constraint', detail: 'placement exam score 200+', child: null }] },
+    })
+  })
+
+  it('parses a placement-exam-score alternative, "score first" phrasing', () => {
+    expect(
+      parsePrereq('Prerequisite(s): score of 400 or higher on the mathematics placement examination (MPE) or MATH 3.'),
+    ).toEqual({
+      ok: true,
+      ast: { type: 'or', children: [{ type: 'constraint', detail: 'placement exam score 400+', child: null }, course('MATH 3')] },
+    })
+  })
+
+  it('parses a placement-exam-score alternative across a full multi-course OR chain (MATH 21)', () => {
+    expect(
+      parsePrereq(
+        'Prerequisite(s): score of 400 or higher on the mathematics placement examination (MPE) or MATH 3 or AM 11A or MATH 11A or MATH 19A or MATH 20A.',
+      ),
+    ).toEqual({
+      ok: true,
+      ast: {
+        type: 'or',
+        children: [
+          { type: 'constraint', detail: 'placement exam score 400+', child: null },
+          course('MATH 3'),
+          course('AM 11A'),
+          course('MATH 11A'),
+          course('MATH 19A'),
+          course('MATH 20A'),
+        ],
+      },
+    })
+  })
+
+  it('parses the "a math placement (MP) score of N or higher" phrasing with no course code alternative', () => {
+    expect(parsePrereq('Prerequisite(s): a math placement (MP) score of 200 or higher.')).toEqual({
+      ok: true,
+      ast: { type: 'constraint', detail: 'placement exam score 200+', child: null },
+    })
   })
 
   it('preserves the ORIGINAL full raw string on fallback, not a stripped sub-clause', () => {
