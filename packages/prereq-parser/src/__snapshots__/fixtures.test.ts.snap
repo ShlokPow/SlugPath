@@ -1,0 +1,2353 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample of real prereqRaw strings (see .snap for the pinned mix of ASTs and fallbacks) 1`] = `
+[
+  {
+    "code": "AM 3",
+    "prereqRaw": "Prerequisite(s): score of 200 or higher on the mathematics placement examination (MPE), or MATH 2.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): score of 200 or higher on the mathematics placement examination (MPE), or MATH 2.",
+    },
+  },
+  {
+    "code": "AM 212",
+    "prereqRaw": "Enrollment is restricted to graduate students or by permission of instructor. Students taking this course need at least one prior undergraduate or M.S.-level course in partial differential equations, similar to AM 112, MATH 107 or PHYS 116C.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students or by permission of instructor. Students taking this course need at least one prior undergraduate or M.S.-level course in partial differential equations, similar to AM 112, MATH 107 or PHYS 116C.",
+    },
+  },
+  {
+    "code": "AM 280C",
+    "prereqRaw": "Enrollment is restricted to graduate students; undergraduates may enroll by permission of the instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students; undergraduates may enroll by permission of the instructor.",
+    },
+  },
+  {
+    "code": "ANTH 136",
+    "prereqRaw": "Prerequisite(s): ANTH 2.",
+    "result": {
+      "ast": {
+        "code": "ANTH 2",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ANTH 176B",
+    "prereqRaw": "Prerequisite(s): ANTH 3.",
+    "result": {
+      "ast": {
+        "code": "ANTH 3",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ANTH 194L",
+    "prereqRaw": "Prerequisite(s): ANTH 1, ANTH 2, ANTH 3 and an upper division course in archaeology; satisfaction of the Entry Level Writing and Composition requirement. Enrollment is restricted to senior anthropology majors.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "ANTH 1",
+            "type": "course",
+          },
+          {
+            "code": "ANTH 2",
+            "type": "course",
+          },
+          {
+            "code": "ANTH 3",
+            "type": "course",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ANTH 196G",
+    "prereqRaw": "Prerequisite(s): Satisfaction of the Entry Level Writing and Composition requirements; and ANTH 1, ANTH 2, and ANTH 3. Enrollment is restricted to senior anthropology majors.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "ANTH 1",
+            "type": "course",
+          },
+          {
+            "code": "ANTH 2",
+            "type": "course",
+          },
+          {
+            "code": "ANTH 3",
+            "type": "course",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ANTH 208A",
+    "prereqRaw": "Enrollment is restricted to anthropology graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to anthropology graduate students.",
+    },
+  },
+  {
+    "code": "ANTH 246",
+    "prereqRaw": "Enrollment is restricted to Anthropology graduate students or by permission of the instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to Anthropology graduate students or by permission of the instructor.",
+    },
+  },
+  {
+    "code": "ANTH 276A",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "APLX 101",
+    "prereqRaw": "Prerequisite(s): APLX 80 or LING 50.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "APLX 80",
+            "type": "course",
+          },
+          {
+            "code": "LING 50",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ART 20J",
+    "prereqRaw": "Prerequisite(s): two courses from ART 10D, ART 10E, ART 10F. Enrollment is restricted to proposed art and art majors.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "ART 10E",
+            "type": "course",
+          },
+          {
+            "code": "ART 10F",
+            "type": "course",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ART 139",
+    "prereqRaw": "Prerequisite(s): One from ART 20J, ART 130, ART 133, ART 137, ART 138; and two non-painting lower-division studios from ART 15, ART 20G, ART 20H, ART 20I, ART 20K, ART 20L, ART 26. Enrollment is restricted to art majors.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "ART 130",
+            "type": "course",
+          },
+          {
+            "code": "ART 133",
+            "type": "course",
+          },
+          {
+            "code": "ART 137",
+            "type": "course",
+          },
+          {
+            "code": "ART 138",
+            "type": "course",
+          },
+          {
+            "code": "ART 20G",
+            "type": "course",
+          },
+          {
+            "code": "ART 20H",
+            "type": "course",
+          },
+          {
+            "code": "ART 20I",
+            "type": "course",
+          },
+          {
+            "code": "ART 20K",
+            "type": "course",
+          },
+          {
+            "code": "ART 20L",
+            "type": "course",
+          },
+          {
+            "code": "ART 26",
+            "type": "course",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ART 172",
+    "prereqRaw": "Enrollment is restricted to juniors and seniors.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to juniors and seniors.",
+    },
+  },
+  {
+    "code": "ART 280",
+    "prereqRaw": "Prerequisite(s): ART 270A. Enrollment is restricted to graduate students.",
+    "result": {
+      "ast": {
+        "code": "ART 270A",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ARTG 170A",
+    "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to senior art and design: games and playable media majors.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to senior art and design: games and playable media majors.",
+    },
+  },
+  {
+    "code": "ASTR 136G",
+    "prereqRaw": "Prerequisite(s): PHYS 133, and one of the following: ASTR 119, ASTR 19, or CSE 20. Enrollment is restricted to senior physics-astrophysics majors, and juniors by permission.",
+    "result": {
+      "ast": {
+        "code": "PHYS 133",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "BIOC 163A",
+    "prereqRaw": "Prerequisite(s): CHEM 1B and CHEM 1C, or CHEM 3C, or CHEM 4B; and PHYS 5A and 5C, or PHYS 6A and 6C; and previous or concurrent enrollment in PHYS 5B or PHYS 6B.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "code": "CHEM 1B",
+                    "type": "course",
+                  },
+                  {
+                    "code": "CHEM 1C",
+                    "type": "course",
+                  },
+                ],
+                "type": "and",
+              },
+              {
+                "code": "CHEM 3C",
+                "type": "course",
+              },
+              {
+                "code": "CHEM 4B",
+                "type": "course",
+              },
+            ],
+            "type": "or",
+          },
+          {
+            "children": [
+              {
+                "code": "PHYS 5A",
+                "type": "course",
+              },
+              {
+                "code": "PHYS 6A",
+                "type": "course",
+              },
+            ],
+            "type": "or",
+          },
+          {
+            "children": [
+              {
+                "child": {
+                  "code": "PHYS 5B",
+                  "type": "course",
+                },
+                "detail": "concurrent enrollment",
+                "type": "constraint",
+              },
+              {
+                "code": "PHYS 6B",
+                "type": "course",
+              },
+            ],
+            "type": "or",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "BIOE 124L",
+    "prereqRaw": "Prerequisite(s): BIOL 20A and BIOE 20B and BIOE 20C. Concurrent enrollment in BIOE 124 is required.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "BIOL 20A",
+            "type": "course",
+          },
+          {
+            "code": "BIOE 20B",
+            "type": "course",
+          },
+          {
+            "code": "BIOE 20C",
+            "type": "course",
+          },
+          {
+            "child": {
+              "code": "BIOE 124",
+              "type": "course",
+            },
+            "detail": "concurrent enrollment",
+            "type": "constraint",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "BIOE 145L",
+    "prereqRaw": "Prerequisite(s): BIOL 20A, BIOE 20B, and BIOE 20C, and satisfaction of the Entry Level Writing and Composition requirements. Concurrent enrollment in BIOE 145 is required. BIOE 107 is recommended.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "BIOL 20A",
+            "type": "course",
+          },
+          {
+            "code": "BIOE 20B",
+            "type": "course",
+          },
+          {
+            "code": "BIOE 20C",
+            "type": "course",
+          },
+          {
+            "child": {
+              "code": "BIOE 145",
+              "type": "course",
+            },
+            "detail": "concurrent enrollment",
+            "type": "constraint",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "BIOE 200B",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "BIOE 281K",
+    "prereqRaw": "Enrollment is restricted to graduate students; qualified undergraduates may enroll by permission of instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students; qualified undergraduates may enroll by permission of instructor.",
+    },
+  },
+  {
+    "code": "BIOL 10",
+    "prereqRaw": "Prerequisite(s): previous or concurrent enrollment in CHEM 3A or CHEM 4A. Enrollment is restricted to frosh and sophomore majors and proposed majors in biology, biochemistry and molecular biology, biotechnology, biomolecular engineering and bioinformatics, ecology and evolutionary biology, global and community health, human biology, marine biology, molecular cell and developmental biology, and neuroscience.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "child": {
+              "code": "CHEM 3A",
+              "type": "course",
+            },
+            "detail": "concurrent enrollment",
+            "type": "constraint",
+          },
+          {
+            "code": "CHEM 4A",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "BIOL 109L",
+    "prereqRaw": "Prerequisite(s): BIOL 100 and BIOL 101; or BIOC 100A and BIOC 100B; and BIOL 101L or BIOL 102L or BIOL 107L; and BIOL 105. Satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to declared Biochemistry and Molecular Biology; Biology B.S.; Molecular, Cell and Developmental Biology and Neuroscience B.S. majors. Other majors may enroll by permission of the instructor. Students cannot enroll in BIOL 109L after receiving credit with a 'C' or better in BIOL 100L, BIOL 103L, BIOL 105L, BIOL 106L, BIOL 108L, BIOL 115L, BIOL 120L, BIOL 121L, BIOL 129L, BIOL 186L, and METX 119L.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "code": "BIOL 100",
+                    "type": "course",
+                  },
+                  {
+                    "code": "BIOL 101",
+                    "type": "course",
+                  },
+                ],
+                "type": "and",
+              },
+              {
+                "children": [
+                  {
+                    "code": "BIOC 100A",
+                    "type": "course",
+                  },
+                  {
+                    "code": "BIOC 100B",
+                    "type": "course",
+                  },
+                ],
+                "type": "and",
+              },
+            ],
+            "type": "or",
+          },
+          {
+            "children": [
+              {
+                "code": "BIOL 101L",
+                "type": "course",
+              },
+              {
+                "code": "BIOL 102L",
+                "type": "course",
+              },
+              {
+                "code": "BIOL 107L",
+                "type": "course",
+              },
+            ],
+            "type": "or",
+          },
+          {
+            "code": "BIOL 105",
+            "type": "course",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "BIOL 129L",
+    "prereqRaw": "Prerequisite(s): either BIOL 100 and BIOL 101, or BIOC 100A and BIOC 100B; and BIOL 101L and BIOL 125; and STAT 5, or STAT 7 and STAT 7L. Satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to declared Neuroscience B.S. majors. Other majors may enroll by permission of the instructor. Students cannot enroll in BIOL 129L after receiving credit with a 'C' or better in BIOL 100L, BIOL 103L, BIOL 105L, BIOL 106L, BIOL 108L, BIOL 109L, BIOL 115L, BIOL 120L, BIOL 121L, BIOL 122K, BIOL 186L and METX 119L.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "code": "BIOL 101",
+                "type": "course",
+              },
+              {
+                "children": [
+                  {
+                    "code": "BIOC 100A",
+                    "type": "course",
+                  },
+                  {
+                    "code": "BIOC 100B",
+                    "type": "course",
+                  },
+                ],
+                "type": "and",
+              },
+            ],
+            "type": "or",
+          },
+          {
+            "code": "BIOL 101L",
+            "type": "course",
+          },
+          {
+            "code": "BIOL 125",
+            "type": "course",
+          },
+          {
+            "children": [
+              {
+                "code": "STAT 5",
+                "type": "course",
+              },
+              {
+                "children": [
+                  {
+                    "code": "STAT 7",
+                    "type": "course",
+                  },
+                  {
+                    "code": "STAT 7L",
+                    "type": "course",
+                  },
+                ],
+                "type": "and",
+              },
+            ],
+            "type": "or",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "BIOL 221",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "BIOL 280S",
+    "prereqRaw": "Enrollment is restricted to graduate students; qualified undergraduates may enroll with permission of instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students; qualified undergraduates may enroll with permission of instructor.",
+    },
+  },
+  {
+    "code": "BME 55",
+    "prereqRaw": "Enrollment is restricted to sophomore and junior proposed biomolecular engineering and bioinformatics majors, or by permission of the instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to sophomore and junior proposed biomolecular engineering and bioinformatics majors, or by permission of the instructor.",
+    },
+  },
+  {
+    "code": "BME 185",
+    "prereqRaw": "Prerequisite(s): BIOL 20A; satisfaction of Entry Level Writing and Composition requirements; Enrollment restricted to junior and senior bioengineering, biomolecular engineering and bioinformatics, and biotechnology majors.",
+    "result": {
+      "ast": {
+        "code": "BIOL 20A",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "BME 281L",
+    "prereqRaw": "Enrollment is restricted to graduate students; qualified undergraduates may enroll with permission of instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students; qualified undergraduates may enroll with permission of instructor.",
+    },
+  },
+  {
+    "code": "CHEM 4AL",
+    "prereqRaw": "Prerequisite(s): prior or current enrollment in CHEM 4A.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): prior or current enrollment in CHEM 4A.",
+    },
+  },
+  {
+    "code": "CHEM 156C",
+    "prereqRaw": "Prerequisite(s): Previous or concurrent enrollment in CHEM 151A. Enrollment is restricted to seniors.",
+    "result": {
+      "ast": {
+        "child": {
+          "code": "CHEM 151A",
+          "type": "course",
+        },
+        "detail": "concurrent enrollment",
+        "type": "constraint",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "CHEM 256B",
+    "prereqRaw": "Enrollment is restricted to graduate students or previous enrollment in CHEM 151A, CHEM 151L, and CHEM 146B.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students or previous enrollment in CHEM 151A, CHEM 151L, and CHEM 146B.",
+    },
+  },
+  {
+    "code": "CHIN 6",
+    "prereqRaw": "Prerequisite(s): CHIN 5 or CHIN 5H or placement by assessment, or by consent of instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): CHIN 5 or CHIN 5H or placement by assessment, or by consent of instructor.",
+    },
+  },
+  {
+    "code": "CMPM 115",
+    "prereqRaw": "Enrollment is restricted to juniors and seniors.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to juniors and seniors.",
+    },
+  },
+  {
+    "code": "CMPM 176",
+    "prereqRaw": "Prerequisite(s): CMPM 80K.",
+    "result": {
+      "ast": {
+        "code": "CMPM 80K",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "CMPM 280C",
+    "prereqRaw": "Enrollment is restricted to computational media and games and playable media graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to computational media and games and playable media graduate students.",
+    },
+  },
+  {
+    "code": "CRES 101",
+    "prereqRaw": "Prerequisite(s): CRES 10, CRES 100, and satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to sophomores, juniors, and seniors.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "CRES 10",
+            "type": "course",
+          },
+          {
+            "code": "CRES 100",
+            "type": "course",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "CRES 201",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "FMST 224",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "CT 167V",
+    "prereqRaw": "Prerequisite(s): CT 10 and CT 11. Enrollment is restricted to junior and senior creative technologies majors.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "CT 10",
+            "type": "course",
+          },
+          {
+            "code": "CT 11",
+            "type": "course",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "CSE 12",
+    "prereqRaw": "Prerequisite(s): CSE 5J, or CSE 20, or CSE 30, or BME 160, or equivalent.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "CSE 5J",
+            "type": "course",
+          },
+          {
+            "code": "CSE 20",
+            "type": "course",
+          },
+          {
+            "code": "CSE 30",
+            "type": "course",
+          },
+          {
+            "code": "BME 160",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "CSE 111",
+    "prereqRaw": "Prerequisite(s): CSE 15 and CSE 15L; or CSE 13S and CMPM 35; or CSE 13E and CMPM 35; or ECE 13 and CMPM 35; or CSE 101.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "code": "CSE 15",
+                "type": "course",
+              },
+              {
+                "code": "CSE 15L",
+                "type": "course",
+              },
+            ],
+            "type": "and",
+          },
+          {
+            "children": [
+              {
+                "code": "CSE 13S",
+                "type": "course",
+              },
+              {
+                "code": "CMPM 35",
+                "type": "course",
+              },
+            ],
+            "type": "and",
+          },
+          {
+            "children": [
+              {
+                "code": "CSE 13E",
+                "type": "course",
+              },
+              {
+                "code": "CMPM 35",
+                "type": "course",
+              },
+            ],
+            "type": "and",
+          },
+          {
+            "children": [
+              {
+                "code": "ECE 13",
+                "type": "course",
+              },
+              {
+                "code": "CMPM 35",
+                "type": "course",
+              },
+            ],
+            "type": "and",
+          },
+          {
+            "code": "CSE 101",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "CSE 132",
+    "prereqRaw": "Prerequisite(s): CSE 130 or CSE 131 or permission of instructor. Enrollment restricted to School of Engineering majors.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "CSE 130",
+            "type": "course",
+          },
+          {
+            "code": "CSE 131",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "CSE 162L",
+    "prereqRaw": "Prerequisite(s): concurrent enrollment in CSE 162 is required.",
+    "result": {
+      "ast": {
+        "child": {
+          "code": "CSE 162",
+          "type": "course",
+        },
+        "detail": "concurrent enrollment",
+        "type": "constraint",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "CSE 209A",
+    "prereqRaw": "Prerequisite(s): CSE 201 or equivalent or instructor consent. Students need a solid background in analysis of algorithms, discrete math, probability theory, graph theory, and overall mathematical maturity. Enrollment is restricted to graduate students.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "child": {
+              "code": "CSE 201",
+              "type": "course",
+            },
+            "detail": "or equivalent",
+            "type": "constraint",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "CSE 234",
+    "prereqRaw": "Prerequisite(s): CSE 201. Enrollment is restricted to graduate students.",
+    "result": {
+      "ast": {
+        "code": "CSE 201",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "CSE 258",
+    "prereqRaw": "Prerequisite(s): linear algebra familiarity. Enrollment is restricted to graduate students, undergraduate students with linear algebra familiarity may enroll by permission of the instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): linear algebra familiarity. Enrollment is restricted to graduate students, undergraduate students with linear algebra familiarity may enroll by permission of the instructor.",
+    },
+  },
+  {
+    "code": "CSE 290G",
+    "prereqRaw": "Prerequisite(s): CSE 212A recommended. Enrollment is restricted to graduate students; undergraduates may enroll with permission of instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): CSE 212A recommended. Enrollment is restricted to graduate students; undergraduates may enroll with permission of instructor.",
+    },
+  },
+  {
+    "code": "CSP 231B",
+    "prereqRaw": "Enrollment restricted to Coastal Science and Policy M.S. students; and to Ph.D. students who have declared the Coastal Science and Policy Designated Emphasis by permission.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment restricted to Coastal Science and Policy M.S. students; and to Ph.D. students who have declared the Coastal Science and Policy Designated Emphasis by permission.",
+    },
+  },
+  {
+    "code": "DANM 219",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "EART 101",
+    "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements and EART 5 or EART 10 or EART 20 or BIOE 20C or ANTH 1. Concurrent enrollment in EART 101L is required.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "code": "EART 5",
+                "type": "course",
+              },
+              {
+                "code": "EART 10",
+                "type": "course",
+              },
+              {
+                "code": "EART 20",
+                "type": "course",
+              },
+              {
+                "code": "BIOE 20C",
+                "type": "course",
+              },
+              {
+                "code": "ANTH 1",
+                "type": "course",
+              },
+            ],
+            "type": "or",
+          },
+          {
+            "child": {
+              "code": "EART 101L",
+              "type": "course",
+            },
+            "detail": "concurrent enrollment",
+            "type": "constraint",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "EART 122",
+    "prereqRaw": "Prerequisite(s): ESCI 100A or EART 110A.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "ESCI 100A",
+            "type": "course",
+          },
+          {
+            "code": "EART 110A",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "EART 164",
+    "prereqRaw": "Prerequisite(s): EART 160 or PHYS 116A.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "EART 160",
+            "type": "course",
+          },
+          {
+            "code": "PHYS 116A",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "EART 258",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "EART 290N",
+    "prereqRaw": "Enrollment is restricted to graduate students and qualified Earth sciences majors by permission of instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students and qualified Earth sciences majors by permission of instructor.",
+    },
+  },
+  {
+    "code": "ECE 104",
+    "prereqRaw": "Enrollment is restricted to juniors, seniors, and graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to juniors, seniors, and graduate students.",
+    },
+  },
+  {
+    "code": "ECE 168",
+    "prereqRaw": "Prerequisite(s): ECE 176. Enrollment is restricted to juniors and seniors.",
+    "result": {
+      "ast": {
+        "code": "ECE 176",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ECE 205",
+    "prereqRaw": "Prerequisite(s): ECE 201 or ECE 207. Enrollment is restricted to graduate students. Students with background in basic matrix algebra and MATLAB programming may enroll with permission of instructor.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "ECE 201",
+            "type": "course",
+          },
+          {
+            "code": "ECE 207",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ECE 242",
+    "prereqRaw": "Prerequisite(s): ECE 141 or ECE 241. Enrollment is restricted to juniors, seniors, and graduate students.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "ECE 141",
+            "type": "course",
+          },
+          {
+            "code": "ECE 241",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ECE 290",
+    "prereqRaw": "Enrollment is restricted to computer engineering, electrical engineering, and electrical and computer engineering graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to computer engineering, electrical engineering, and electrical and computer engineering graduate students.",
+    },
+  },
+  {
+    "code": "ECON 117B",
+    "prereqRaw": "Prerequisite(s): ECON 10B.",
+    "result": {
+      "ast": {
+        "code": "ECON 10B",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ECON 156",
+    "prereqRaw": "Prerequisite(s): ECON 100A or ECON 100M; and ECON 113.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "code": "ECON 100A",
+                "type": "course",
+              },
+              {
+                "code": "ECON 100M",
+                "type": "course",
+              },
+            ],
+            "type": "or",
+          },
+          {
+            "code": "ECON 113",
+            "type": "course",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ECON 197",
+    "prereqRaw": "Prerequisite(s): Entry Level Writing and Composition requirements; ECON 100A or ECON 100M. ECON 100B or ECON 100N and ECON 113 strongly recommended. Restricted to sophomore, junior, and senior economics, business-management economics, global economics and combined economics/math majors.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "code": "ECON 100A",
+                "type": "course",
+              },
+              {
+                "code": "ECON 100M",
+                "type": "course",
+              },
+            ],
+            "type": "or",
+          },
+          {
+            "children": [
+              {
+                "code": "ECON 100B",
+                "type": "course",
+              },
+              {
+                "code": "ECON 100N",
+                "type": "course",
+              },
+            ],
+            "type": "or",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ECON 224",
+    "prereqRaw": "Prerequisite(s): ECON 211A, ECON 211B and ECON 211C, or ECON 216 and ECON 217. Recommended prerequisites: M.S. QEFN students should have A’s in the econometrics sequence and be comfortable with linear algebra. Experience with R, MATLAB, Python, or related programming language is very strongly recommended, as the course will not teach basic programming.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "ECON 211A",
+            "type": "course",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "code": "ECON 211B",
+                    "type": "course",
+                  },
+                  {
+                    "code": "ECON 211C",
+                    "type": "course",
+                  },
+                ],
+                "type": "and",
+              },
+              {
+                "children": [
+                  {
+                    "code": "ECON 216",
+                    "type": "course",
+                  },
+                  {
+                    "code": "ECON 217",
+                    "type": "course",
+                  },
+                ],
+                "type": "and",
+              },
+            ],
+            "type": "or",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ECON 276",
+    "prereqRaw": "Prerequisite(s): ECON 204C, ECON 205C, and ECON 211C, or by consent of instructor. Enrollment is restricted to graduate students.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "ECON 204C",
+            "type": "course",
+          },
+          {
+            "code": "ECON 205C",
+            "type": "course",
+          },
+          {
+            "children": [
+              {
+                "code": "ECON 211C",
+                "type": "course",
+              },
+              {
+                "child": null,
+                "detail": "instructor permission",
+                "type": "constraint",
+              },
+            ],
+            "type": "or",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "EDUC 164",
+    "prereqRaw": "Enrollment is restricted to junior and senior education, democracy and justice majors; science education majors; critical race and ethnic studies majors; and STEM, EDUC and Black studies minors, or by permission of instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to junior and senior education, democracy and justice majors; science education majors; critical race and ethnic studies majors; and STEM, EDUC and Black studies minors, or by permission of instructor.",
+    },
+  },
+  {
+    "code": "EDUC 205",
+    "prereqRaw": "Enrollment is restricted to MA/credential students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to MA/credential students.",
+    },
+  },
+  {
+    "code": "EDUC 229",
+    "prereqRaw": "Prerequisite(s): EDUC 228. Enrollment is restricted to MA/credential students.",
+    "result": {
+      "ast": {
+        "code": "EDUC 228",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "EDUC 268",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "EDUC 292",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "ENVS 130A",
+    "prereqRaw": "Prerequisite(s): Concurrent enrollment in ENVS 130L and previous or concurrent enrollment in ENVS 100 and ENVS 100L, or by permission of instructor.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "child": {
+                  "code": "ENVS 130L",
+                  "type": "course",
+                },
+                "detail": "concurrent enrollment",
+                "type": "constraint",
+              },
+              {
+                "child": {
+                  "code": "ENVS 100",
+                  "type": "course",
+                },
+                "detail": "concurrent enrollment",
+                "type": "constraint",
+              },
+              {
+                "code": "ENVS 100L",
+                "type": "course",
+              },
+            ],
+            "type": "and",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ENVS 158",
+    "prereqRaw": "Prerequisite(s): Previous or concurrent enrollment in ENVS 100 and ENVS 100L, or by permission of instructor.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "child": {
+                  "code": "ENVS 100",
+                  "type": "course",
+                },
+                "detail": "concurrent enrollment",
+                "type": "constraint",
+              },
+              {
+                "code": "ENVS 100L",
+                "type": "course",
+              },
+            ],
+            "type": "and",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ENVS 178",
+    "prereqRaw": "Prerequisite(s): previous or concurrent enrollment in ENVS 100 and ENVS 100L, or by permission of the instructor.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "child": {
+                  "code": "ENVS 100",
+                  "type": "course",
+                },
+                "detail": "concurrent enrollment",
+                "type": "constraint",
+              },
+              {
+                "code": "ENVS 100L",
+                "type": "course",
+              },
+            ],
+            "type": "and",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "ENVS 268",
+    "prereqRaw": "Enrollment is restricted to environmental studies graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to environmental studies graduate students.",
+    },
+  },
+  {
+    "code": "FILM 130",
+    "prereqRaw": "Prerequisite(s): FILM 20A, satisfaction of the Entry Level Writing and Composition requirements.",
+    "result": {
+      "ast": {
+        "code": "FILM 20A",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "FILM 165E",
+    "prereqRaw": "Prerequisite(s): FILM 20A. Enrollment is restricted to sophomores, juniors, and seniors.",
+    "result": {
+      "ast": {
+        "code": "FILM 20A",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "FILM 185F",
+    "prereqRaw": "Prerequisite(s): FILM 120 or FILM 130 or FILM 132A or FILM 132B or FILM 132C/FILM 165G or FILM 134A or FILM 134B. Enrollment is restricted to film and digital media majors.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "FILM 120",
+            "type": "course",
+          },
+          {
+            "code": "FILM 130",
+            "type": "course",
+          },
+          {
+            "code": "FILM 132A",
+            "type": "course",
+          },
+          {
+            "code": "FILM 132B",
+            "type": "course",
+          },
+          {
+            "code": "FILM 132C",
+            "type": "course",
+          },
+          {
+            "code": "FILM 134A",
+            "type": "course",
+          },
+          {
+            "code": "FILM 134B",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "FILM 221",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "FMST 12",
+    "prereqRaw": "Prerequisite(s): Completion of at least one other lower-division feminist studies course.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): Completion of at least one other lower-division feminist studies course.",
+    },
+  },
+  {
+    "code": "FMST 194D",
+    "prereqRaw": "Prerequisite(s): FMST 1 and FMST 100; satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to senior feminist studies majors.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "FMST 1",
+            "type": "course",
+          },
+          {
+            "code": "FMST 100",
+            "type": "course",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "FMST 214",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "FREN 114",
+    "prereqRaw": "Prerequisite(s): FREN 6 or placement by assessment.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): FREN 6 or placement by assessment.",
+    },
+  },
+  {
+    "code": "GAME 238",
+    "prereqRaw": "Prerequisite(s): GAME 230 or GAME 235. Enrollment is restricted to graduate students.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "GAME 230",
+            "type": "course",
+          },
+          {
+            "code": "GAME 235",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "GRAD 200",
+    "prereqRaw": "Concurrent enrollment in GRAD 200 and GRAD 202 is required. Enrollment is restricted to international graduate students in the Graduate Preparation Program.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "child": {
+              "code": "GRAD 200",
+              "type": "course",
+            },
+            "detail": "concurrent enrollment",
+            "type": "constraint",
+          },
+          {
+            "code": "GRAD 202",
+            "type": "course",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "HAVC 233",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "HISC 185C",
+    "prereqRaw": "Enrollment is restricted to sophomores, juniors, and seniors.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to sophomores, juniors, and seniors.",
+    },
+  },
+  {
+    "code": "HISC 230B",
+    "prereqRaw": "Prerequisite(s): HISC 230A, or permission of instructor.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "HISC 230A",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "HISC 269",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "HIS 189",
+    "prereqRaw": "Enrollment is restricted to junior and senior history, Jewish studies, German studies, and classical studies majors.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to junior and senior history, Jewish studies, German studies, and classical studies majors.",
+    },
+  },
+  {
+    "code": "HIS 194C",
+    "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements, HIS 100, and two upper-division history courses, or permission of instructor. Enrollment is restricted to junior and senior history majors.",
+    "result": {
+      "ast": {
+        "code": "HIS 100",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "HIS 196N",
+    "prereqRaw": "Prerequisite(s): Satisfaction of the Entry Level Writing and Composition requirements, HIS 100 (for history majors), and two additional upper-division history courses. Enrollment is restricted to junior and senior history and Jewish studies majors.",
+    "result": {
+      "ast": {
+        "code": "HIS 100",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "HIS 212A",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "HIS 244",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "HCI 202A",
+    "prereqRaw": "Enrollment is restricted to graduate students in human computer interaction, or by permission of the instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students in human computer interaction, or by permission of the instructor.",
+    },
+  },
+  {
+    "code": "JAPN 103",
+    "prereqRaw": "Prerequisite(s): JAPN 6 or placement by assessment.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): JAPN 6 or placement by assessment.",
+    },
+  },
+  {
+    "code": "LALS 56L",
+    "prereqRaw": "Prerequisite(s): concurrent enrollment in LALS 56.",
+    "result": {
+      "ast": {
+        "child": {
+          "code": "LALS 56",
+          "type": "course",
+        },
+        "detail": "concurrent enrollment",
+        "type": "constraint",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "LALS 200B",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "LALS 258",
+    "prereqRaw": "Enrollment is restricted to graduate students, or by permission of the instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students, or by permission of the instructor.",
+    },
+  },
+  {
+    "code": "POLI 105B",
+    "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
+    },
+  },
+  {
+    "code": "LING 112",
+    "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
+    },
+  },
+  {
+    "code": "LING 164",
+    "prereqRaw": "Prerequisite(s): CSE 10 and CSE 14, or permission of instructor.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "code": "CSE 10",
+                "type": "course",
+              },
+              {
+                "code": "CSE 14",
+                "type": "course",
+              },
+            ],
+            "type": "and",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "LING 222",
+    "prereqRaw": "Prerequisite(s): LING 221. Enrollment is restricted to graduate students or by permission of instructor.",
+    "result": {
+      "ast": {
+        "code": "LING 221",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "LING 280",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "LIT 184E",
+    "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
+    },
+  },
+  {
+    "code": "LIT 200",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "LIT 251",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "MATH 2S",
+    "prereqRaw": "Prerequisite(s): mathematics placement (MP) score of 100 or higher.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): mathematics placement (MP) score of 100 or higher.",
+    },
+  },
+  {
+    "code": "MATH 103B",
+    "prereqRaw": "Prerequisite(s): MATH 103A.",
+    "result": {
+      "ast": {
+        "code": "MATH 103A",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "MATH 129",
+    "prereqRaw": "Prerequisite(s): MATH 100.",
+    "result": {
+      "ast": {
+        "code": "MATH 100",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "MATH 207",
+    "prereqRaw": "Prerequisite(s): MATH 103 is recommended as preparation. Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): MATH 103 is recommended as preparation. Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "MATH 226A",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "MATH 264",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "METX 133",
+    "prereqRaw": "Prerequisite(s): BIOL 20A.",
+    "result": {
+      "ast": {
+        "code": "BIOL 20A",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "METX 281M",
+    "prereqRaw": "Enrollment is restricted to graduate students. Undergraduates may enroll with instructor's permission.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students. Undergraduates may enroll with instructor's permission.",
+    },
+  },
+  {
+    "code": "MUSC 105A",
+    "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements; or by permission of the instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements; or by permission of the instructor.",
+    },
+  },
+  {
+    "code": "MUSC 150I",
+    "prereqRaw": "MUSC 54, MUSC 55, MUSC 55A, MUSC 78, or MUSC 80X; or by permission of instructor.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "MUSC 54",
+            "type": "course",
+          },
+          {
+            "code": "MUSC 55",
+            "type": "course",
+          },
+          {
+            "code": "MUSC 55A",
+            "type": "course",
+          },
+          {
+            "code": "MUSC 78",
+            "type": "course",
+          },
+          {
+            "code": "MUSC 80X",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "MUSC 206B",
+    "prereqRaw": "Enrollment is restricted to graduate students; undergraduates may enroll with permission of the instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students; undergraduates may enroll with permission of the instructor.",
+    },
+  },
+  {
+    "code": "MUSC 254N",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "OAKS 1A",
+    "prereqRaw": "Enrollment is restricted to entering first-year Oakes College students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to entering first-year Oakes College students.",
+    },
+  },
+  {
+    "code": "OCEA 111",
+    "prereqRaw": "Prerequisite(s): MATH 11B or equivalent; PHYS 6B; and ESCI 100A or EART 110A.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "child": {
+              "code": "MATH 11B",
+              "type": "course",
+            },
+            "detail": "or equivalent",
+            "type": "constraint",
+          },
+          {
+            "code": "PHYS 6B",
+            "type": "course",
+          },
+          {
+            "children": [
+              {
+                "code": "ESCI 100A",
+                "type": "course",
+              },
+              {
+                "code": "EART 110A",
+                "type": "course",
+              },
+            ],
+            "type": "or",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "OCEA 260",
+    "prereqRaw": "Prerequisite(s): previous course in ocean or earth sciences is recommended. Enrollment is restricted to graduate students; undergraduates with permission of instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): previous course in ocean or earth sciences is recommended. Enrollment is restricted to graduate students; undergraduates with permission of instructor.",
+    },
+  },
+  {
+    "code": "PHIL 114",
+    "prereqRaw": "Prerequisite(s): PHIL 100A or PHIL 100B or PHIL 100C or PHIL 100D.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "PHIL 100A",
+            "type": "course",
+          },
+          {
+            "code": "PHIL 100B",
+            "type": "course",
+          },
+          {
+            "code": "PHIL 100C",
+            "type": "course",
+          },
+          {
+            "code": "PHIL 100D",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "PHIL 203",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "PHIL 290O",
+    "prereqRaw": "Enrollment is restricted to philosophy graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to philosophy graduate students.",
+    },
+  },
+  {
+    "code": "PHYS 6A",
+    "prereqRaw": "Prerequisite(s): MATH 11B or 16B or 19B or 20B or AM 15B.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): MATH 11B or 16B or 19B or 20B or AM 15B.",
+    },
+  },
+  {
+    "code": "PHYS 120",
+    "prereqRaw": "Prerequisite(s): PHYS 112.",
+    "result": {
+      "ast": {
+        "code": "PHYS 112",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "PHYS 202",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "PHYS 251",
+    "prereqRaw": "Enrollment is restricted to graduate students only, except by permission of instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students only, except by permission of instructor.",
+    },
+  },
+  {
+    "code": "POLI 125",
+    "prereqRaw": "Enrollment is restricted to politics and Latin American and Latino studies/politics combined majors during first and second pass enrollment.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to politics and Latin American and Latino studies/politics combined majors during first and second pass enrollment.",
+    },
+  },
+  {
+    "code": "POLI 190V",
+    "prereqRaw": "Enrollment is restricted to juniors and seniors politics majors.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to juniors and seniors politics majors.",
+    },
+  },
+  {
+    "code": "POLI 217",
+    "prereqRaw": "Enrollment is restricted to graduate studies.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate studies.",
+    },
+  },
+  {
+    "code": "ENVS 144",
+    "prereqRaw": "Prerequisite(s): Environmental Studies students, previous or concurrent enrollment in courses ENVS 100 and ENVS 100L, or by permission of instructor.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "ENVS 100L",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "PSYC 112",
+    "prereqRaw": "Prerequisite(s): PSYC 10 and PSYC 100.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "PSYC 10",
+            "type": "course",
+          },
+          {
+            "code": "PSYC 100",
+            "type": "course",
+          },
+        ],
+        "type": "and",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "PSYC 123",
+    "prereqRaw": "Prerequisite(s): PSYC 100. Enrollment is restricted to psychology and cognitive science majors and minors.",
+    "result": {
+      "ast": {
+        "code": "PSYC 100",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "PSYC 139R",
+    "prereqRaw": "Prerequisite(s): PSYC 100 and satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to senior psychology and cognitive science majors.",
+    "result": {
+      "ast": {
+        "code": "PSYC 100",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "PSYC 148",
+    "prereqRaw": "Prerequisite(s): PSYC 100. Note: critical race and ethnic studies majors, Black studies minors, and science and justice minors may contact the instructor for permission to enroll.",
+    "result": {
+      "ast": {
+        "code": "PSYC 100",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "PSYC 169",
+    "prereqRaw": "Prerequisite(s): PSYC 100. PSYC 60 or PSYC 170 recommended.",
+    "result": {
+      "ast": {
+        "code": "PSYC 100",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "PSYC 211C",
+    "prereqRaw": "Enrollment is restricted to social psychology first-year graduate students, or by permission of instructor.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to social psychology first-year graduate students, or by permission of instructor.",
+    },
+  },
+  {
+    "code": "PSYC 246",
+    "prereqRaw": "Enrollment is restricted to graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students.",
+    },
+  },
+  {
+    "code": "SCIC 201C",
+    "prereqRaw": "Enrollment is restricted to graduate students formally accepted into the writing track of the Science Communication Program.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to graduate students formally accepted into the writing track of the Science Communication Program.",
+    },
+  },
+  {
+    "code": "SOCY 111",
+    "prereqRaw": "Prerequisite(s): SOCY 1 or SOCY 10 or SOCY 15. Enrollment is restricted to sophomores, juniors, and seniors.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "SOCY 1",
+            "type": "course",
+          },
+          {
+            "code": "SOCY 10",
+            "type": "course",
+          },
+          {
+            "code": "SOCY 15",
+            "type": "course",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "SOCY 128J",
+    "prereqRaw": "Enrollment restricted to sophomore, junior, and senior majors, proposed majors, and minors in legal studies, sociology, community studies, Latin American/sociology combined, digital justice studies (formerly GISES), and critical race and ethnic studies.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment restricted to sophomore, junior, and senior majors, proposed majors, and minors in legal studies, sociology, community studies, Latin American/sociology combined, digital justice studies (formerly GISES), and critical race and ethnic studies.",
+    },
+  },
+  {
+    "code": "SOCY 148",
+    "prereqRaw": "Prerequisite(s): SOCY 3A and SOCY 3B, or by instructor permission. Enrollment restricted to junior, senior majors, proposed majors, and minors in sociology, education, digital justice studies (formerly GISES), and Latin American studies/sociology combined.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "children": [
+              {
+                "code": "SOCY 3A",
+                "type": "course",
+              },
+              {
+                "code": "SOCY 3B",
+                "type": "course",
+              },
+            ],
+            "type": "and",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "SOCY 170P",
+    "prereqRaw": "Prerequisite(s): SOCY 1 or SOCY 10 or SOCY 15 or CRES 10, or by permission of the instructor.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "SOCY 1",
+            "type": "course",
+          },
+          {
+            "code": "SOCY 10",
+            "type": "course",
+          },
+          {
+            "code": "SOCY 15",
+            "type": "course",
+          },
+          {
+            "code": "CRES 10",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "SOCY 200B",
+    "prereqRaw": "Prerequisite(s): SOCY 200A. Enrollment is restricted to sociology graduate students or by permission of the instructor.",
+    "result": {
+      "ast": {
+        "code": "SOCY 200A",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "SOCY 247",
+    "prereqRaw": "Enrollment is restricted to sociology graduate students.",
+    "result": {
+      "ok": false,
+      "raw": "Enrollment is restricted to sociology graduate students.",
+    },
+  },
+  {
+    "code": "SPAN 4",
+    "prereqRaw": "Prerequisite(s): SPAN 1B or SPAN 3 or placement by assessment.",
+    "result": {
+      "ok": false,
+      "raw": "Prerequisite(s): SPAN 1B or SPAN 3 or placement by assessment.",
+    },
+  },
+  {
+    "code": "SPAN 157",
+    "prereqRaw": "Prerequisite(s): SPAN 150. Enrollment restricted to Spanish studies majors.",
+    "result": {
+      "ast": {
+        "code": "SPAN 150",
+        "type": "course",
+      },
+      "ok": true,
+    },
+  },
+  {
+    "code": "STAT 206",
+    "prereqRaw": "Prerequisite(s): STAT 131 or STAT 203, or by permission of the instructor. Enrollment is restricted to graduate students.",
+    "result": {
+      "ast": {
+        "children": [
+          {
+            "code": "STAT 131",
+            "type": "course",
+          },
+          {
+            "code": "STAT 203",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
+    },
+  },
+]
+`;
