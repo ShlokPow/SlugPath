@@ -55,8 +55,12 @@ export interface BuildPrereqGraphParams {
   takenCodes: Set<string>
 }
 
+// Course height must cover the worst case rendered by CourseNode: code + title +
+// wrapped GE-code badges + taken/planned label. 64 was sized for the bare
+// code+title case only, so dagre packed rows too tightly and any course with
+// GE codes (or a taken/planned tag) overlapped the rank below it.
 const NODE_SIZE: Record<PrereqNodeData['kind'], { width: number; height: number }> = {
-  course: { width: 200, height: 64 },
+  course: { width: 200, height: 96 },
   gate: { width: 64, height: 36 },
   raw: { width: 220, height: 80 },
 }

@@ -98,7 +98,15 @@ export function PrereqGraphPanel({ targetCode }: { targetCode: string }) {
       </div>
       <div style={{ flex: 1 }}>
         {graph ? (
-          <ReactFlow nodes={graph.nodes} edges={graph.edges} nodeTypes={nodeTypes} nodesDraggable={false} nodesConnectable={false} fitView>
+          <ReactFlow
+            nodes={graph.nodes}
+            edges={graph.edges}
+            nodeTypes={nodeTypes}
+            nodesDraggable={false}
+            nodesConnectable={false}
+            defaultEdgeOptions={{ type: 'smoothstep' }}
+            fitView
+          >
             <Background />
             <Controls showInteractive={false} />
           </ReactFlow>
