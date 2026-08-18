@@ -1,20 +1,11 @@
-import { createRoot, type Root } from 'react-dom/client'
+import type { Root } from 'react-dom/client'
 import { Panel } from './Panel'
+import { createShadowMount } from './shadowMount'
 import { injectAddToPlanButtons } from './scheduleInjection'
+import { injectPrereqPopovers } from './prereqPopoverInjection'
 import { findCourseBlocks } from '../adapters/catalog'
 import { PrereqGraphPanel } from '../prereq-graph/PrereqGraphPanel'
 import { SchedulePanel } from '../schedule/SchedulePanel'
-
-// One host <div> + shadow root per mount point, per the isolation pattern
-// used throughout content-script UI: prevents page styles leaking in and
-// Tailwind/inline styles leaking out.
-function createShadowMount(): { host: HTMLDivElement; root: Root } {
-  const host = document.createElement('div')
-  const shadowRoot = host.attachShadow({ mode: 'open' })
-  const mountPoint = document.createElement('div')
-  shadowRoot.appendChild(mountPoint)
-  return { host, root: createRoot(mountPoint) }
-}
 
 // MyUCSC's my.ucsc.edu content script runs in every frame (manifest.config.ts
 // sets all_frames: true there) because PeopleSoft renders class-search
@@ -43,6 +34,7 @@ if (location.hostname === 'my.ucsc.edu') {
     scheduleRoot.render(<SchedulePanel />)
   }
   void injectAddToPlanButtons(document)
+  void injectPrereqPopovers(document)
 }
 
 /**
