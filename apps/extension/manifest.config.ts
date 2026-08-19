@@ -25,7 +25,11 @@ export default defineManifest({
       // the content script needs to run in every frame to reach it. It's a
       // no-op on any extra frame catalog.ucsc.edu doesn't have, and
       // index.tsx gates panel mounting to the top frame either way.
-      matches: ['https://catalog.ucsc.edu/*', 'https://my.ucsc.edu/*'],
+      // pisa.ucsc.edu: MyUCSC's "Main Content" iframe navigates there for
+      // the actual class-search results grid (a UCSC-built page, not
+      // PeopleSoft-rendered) — without it listed here, that frame never
+      // gets the content script and the row buttons never appear.
+      matches: ['https://catalog.ucsc.edu/*', 'https://my.ucsc.edu/*', 'https://pisa.ucsc.edu/*'],
       js: ['src/content/index.tsx'],
       all_frames: true,
     },

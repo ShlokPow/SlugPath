@@ -1,10 +1,16 @@
-// Every my.ucsc.edu (MyUCSC / PeopleSoft) DOM selector lives in this one
-// file — mirrors the catalog adapter pattern (see catalog.ts and
-// V1_FEATURES_AND_TECH.md) so a PeopleSoft DOM change is a single-file fix.
-// PeopleSoft auto-generates element ids as `RECORDNAME_FIELDNAME$rownum`
-// (row index changes per render, field name doesn't), so selectors below
-// match on the stable field-name substring via `[id*="..."]` rather than
-// exact ids — the standard resilient-scraping approach for this platform.
+// Every my.ucsc.edu class-search DOM selector lives in this one file —
+// mirrors the catalog adapter pattern (see catalog.ts) so a DOM change is a
+// single-file fix.
+//
+// The results grid is NOT rendered by PeopleSoft itself: my.ucsc.edu's
+// "Main Content" iframe navigates to a UCSC-built results page served from
+// pisa.ucsc.edu (Bootstrap-based, one `<div class="panel panel-default row"
+// id="rowpanel_N">` per section, N reassigned every render). Selectors
+// below match on those stable id prefixes / icon classes rather than exact
+// ids or table structure. Verified 2026-08-18 against a real captured row
+// (see myucsc.test.ts) — an earlier version of this file targeted
+// PeopleSoft-classic `<tr>`/`RECORDNAME_FIELDNAME$n` markup that doesn't
+// exist on the current site at all.
 
 import type { MeetingPattern, Section } from '../storage/types'
 
@@ -74,51 +80,53 @@ function parseMeetingTime(daytimeText: string, room: string): MeetingPattern[] {
   return [{ days, startMinute, endMinute, location: room.trim() }]
 }
 
-// "5 / 30" (available / capacity) -> 5. Any other shape defaults to 0
-// (closed/unparseable reads as "no open seats" rather than throwing).
-function parseSeatsOpen(seatsText: string): number {
-  const m = /^(\d+)\s*\/\s*\d+$/.exec(seatsText.trim())
-  return m?.[1] ? parseInt(m[1], 10) : 0
+// "60 of 70 Enrolled" -> 10 open (capacity - enrolled). Any other shape
+// defaults to 0 (unparseable reads as "no open seats" rather than throwing).
+function parseSeatsOpen(rowText: string): number {
+  const m = /(\d+)\s+of\s+(\d+)\s+Enrolled/i.exec(rowText)
+  if (!m?.[1] || !m[2]) return 0
+  return Math.max(0, parseInt(m[2], 10) - parseInt(m[1], 10))
 }
 
-function fieldText(row: Element, idPart: string): string {
-  return row.querySelector(`[id*="${idPart}"]`)?.textContent?.trim() ?? ''
+// Each meeting-pattern field is a `<div>` whose only child element with
+// class `iconClass` is a Font Awesome icon (`.fa-user`, `.fa-clock-o`, ...)
+// immediately followed by a visually-hidden `.sr-only` label and then the
+// actual value as trailing text — e.g. `<i class="fa fa-user">
+// <i class="sr-only">Instructor:</i> J. Smith`. Reads the icon's parent's
+// full text and strips the label back off, since sr-only text is still
+// part of textContent.
+function fieldByIcon(rowEl: Element, iconClass: string, label: string): string {
+  const icon = rowEl.querySelector(`.${iconClass}`)
+  return (icon?.parentElement?.textContent ?? '').replace(label, '').trim()
 }
 
 export function parseSearchResults(root: ParentNode): { section: Section; rowEl: Element }[] {
   const results: { section: Section; rowEl: Element }[] = []
 
-  for (const nbrEl of root.querySelectorAll('[id*="CLASS_NBR"]')) {
+  for (const rowEl of root.querySelectorAll('[id^="rowpanel_"]')) {
     try {
-      const rowEl = nbrEl.closest('tr')
-      if (!rowEl) continue
-
-      const courseCode = fieldText(rowEl, 'CLASS_SUBJ_CATLG')
-      const sectionNumber = fieldText(rowEl, 'CLASS_SECTION')
+      // Header anchor text is e.g. SUBJ NUM - SECTION, then a run of nbsp
+      // chars, then the title (plain spaces inside the code/section itself,
+      // so split on a single nbsp char and take the first piece).
+      const headerText = rowEl.querySelector('.panel-heading-custom h2 a')?.textContent ?? ''
+      const [codeAndSection] = headerText.split(String.fromCharCode(160))
+      const m = /^(.+?)\s+-\s+(\S+)$/.exec((codeAndSection ?? '').trim())
+      const courseCode = m?.[1]?.trim() ?? ''
+      const sectionNumber = m?.[2]?.trim() ?? ''
       if (!courseCode || !sectionNumber) continue // can't key a section without both
 
-      const daytime = fieldText(rowEl, 'MTG_DAYTIME')
-      const room = fieldText(rowEl, 'MTG_ROOM')
-      const instructor = fieldText(rowEl, 'MTG_INSTR')
+      const instructor = fieldByIcon(rowEl, 'fa-user', 'Instructor:')
+      // Location text is like "LEC: Soc Sci 1 110" -- strip the instruction-type prefix.
+      const room = fieldByIcon(rowEl, 'fa-location-arrow', 'Location:').replace(/^[A-Za-z]+:\s*/, '')
+      const daytime = fieldByIcon(rowEl, 'fa-clock-o', 'Day and Time:')
       const meetingPattern = parseMeetingTime(daytime, room)
-      const seatsOpen = parseSeatsOpen(fieldText(rowEl, 'CLASS_SEATS'))
+      const seatsOpen = parseSeatsOpen(rowEl.textContent ?? '')
 
-      const linkedRaw = rowEl.querySelector('[id*="CLASS_LINKED"]')?.getAttribute('data-linked-keys')
-      const linkedSectionKeys = linkedRaw
-        ? linkedRaw
-            .split(';')
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : undefined
-
-      const section: Section = {
-        courseCode,
-        sectionNumber,
-        meetingPattern,
-        instructor,
-        seatsOpen,
-        ...(linkedSectionKeys && linkedSectionKeys.length > 0 ? { linkedSectionKeys } : {}),
-      }
+      // ponytail: no verified real markup yet for cross-listed/linked
+      // sections (lecture+discussion grouping) on this page — leaving
+      // linkedSectionKeys unset rather than guessing. Add real detection
+      // here once a captured row with a cross-listed section is available.
+      const section: Section = { courseCode, sectionNumber, meetingPattern, instructor, seatsOpen }
       results.push({ section, rowEl })
     } catch {
       // One malformed row should never take down the whole results parse.
@@ -129,13 +137,16 @@ export function parseSearchResults(root: ParentNode): { section: Section; rowEl:
   return results
 }
 
+// ponytail: unverified against the current site (no production caller uses
+// it), left as the prior best-guess selector. Fix alongside real markup if
+// this becomes load-bearing.
 export function getCurrentTerm(root: ParentNode): string | null {
   const text = root.querySelector('[id*="TERM_LONG"], [id*="SSR_CLASS_TERM"]')?.textContent?.trim()
   return text ? text : null
 }
 
 function hasResults(root: ParentNode): Element | null {
-  return root.querySelector('[id*="CLASS_NBR"]')
+  return root.querySelector('[id^="rowpanel_"]')
 }
 
 // MyUCSC's search results load asynchronously into the DOM (PeopleSoft's
