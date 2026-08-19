@@ -2,156 +2,135 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { getCurrentTerm, parseSearchResults, waitForResults } from './myucsc'
 
-// SYNTHETIC fixture — NOT a verbatim capture (unlike catalog.test.ts's
-// fixture). MyUCSC is behind login and PeopleSoft-rendered, so it isn't
-// something we can fetch and paste. This models PeopleSoft's real
-// conventions as closely as we can from documentation/observed patterns:
-// class-search results render as a grid table, one <tr> per section, with
-// auto-generated field ids of the form `RECORDNAME_FIELDNAME$rownum`
-// (the row-index suffix changes per render, the field name doesn't — the
-// adapter selects on that stable substring). Linked sections (lecture +
-// discussion, cross-listed courses) are modeled here as a `data-linked-keys`
-// attribute on a `CLASS_LINKED$n` field, since MyUCSC's actual associated-
-// class markup isn't something we have access to verify.
-const TERM_HEADER = `
-<div id="win0divDERIVED_SSS_SCT_SSS_TERM_LONG$0">
-  <span id="DERIVED_SSS_SCT_SSS_TERM_LONG$0">Fall 2026</span>
+// Row 0 is a VERBATIM capture (outer HTML, via DevTools) of a real
+// pisa.ucsc.edu class-search result -- the page my.ucsc.edu's "Main
+// Content" iframe actually navigates to for class search (see the header
+// comment in myucsc.ts). Rows 1-3 are constructed by analogy to exercise
+// cases the captured row doesn't (closed section, async/TBA meeting time)
+// -- not verified against a real capture.
+const RESULTS_FIXTURE = `
+<div class="panel panel-default row" style="margin-top: 0px; margin-bottom: 0px;" id="rowpanel_0">
+  <div class="panel-heading panel-heading-custom"><h2 style="margin:0px;"><a id="class_id_10225" href="#">ANTH 130F - 01&nbsp;&nbsp;&nbsp;Blackness In Motion</a></h2></div>
+  <div class="panel-body" style="padding-top: 0px;">
+    <div class="row ">
+      <div class="col-xs-6 col-sm-3">Class Number: <a id="class_nbr_10225" href="#">10225</a></div>
+      <div class="col-xs-6 col-sm-3"><i class="fa fa-user" aria-hidden="true"></i><i class="sr-only">Instructor:</i> Shange-Binion,S.T.</div>
+      <div class="col-xs-12 col-sm-6">
+        <div class="col-xs-6 col-sm-6"><i class="fa fa-location-arrow" aria-hidden="true"></i><i class="sr-only">Location:</i> LEC: Soc Sci 1 110</div>
+        <div class="col-xs-6 col-sm-6"><i class="fa fa-clock-o" aria-hidden="true"></i><i class="sr-only">Day and Time:</i> MW 05:20PM-06:55PM  </div>
+      </div>
+      <div class="col-xs-6 col-sm-3"> 60 of 70 Enrolled</div>
+      <div class="col-xs-6 col-sm-3 hide-print"><a href="#"><i class="fa fa-cart-plus" aria-hidden="true"></i> Add to Cart</a></div>
+      <div class="col-xs-6 col-sm-3 hide-print"><i class="sr-only">Instruction Mode:</i><b>In Person</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default row" style="margin-top: 0px; margin-bottom: 0px;" id="rowpanel_1">
+  <div class="panel-heading panel-heading-custom"><h2 style="margin:0px;"><a id="class_id_40326" href="#">CSE 101 - 01A&nbsp;&nbsp;&nbsp;Software Engineering</a></h2></div>
+  <div class="panel-body" style="padding-top: 0px;">
+    <div class="row ">
+      <div class="col-xs-6 col-sm-3">Class Number: <a id="class_nbr_40326" href="#">40326</a></div>
+      <div class="col-xs-6 col-sm-3"><i class="fa fa-user" aria-hidden="true"></i><i class="sr-only">Instructor:</i> Staff</div>
+      <div class="col-xs-12 col-sm-6">
+        <div class="col-xs-6 col-sm-6"><i class="fa fa-location-arrow" aria-hidden="true"></i><i class="sr-only">Location:</i> DIS: Soc Sci 1 141</div>
+        <div class="col-xs-6 col-sm-6"><i class="fa fa-clock-o" aria-hidden="true"></i><i class="sr-only">Day and Time:</i> TTh 2:00PM-3:45PM  </div>
+      </div>
+      <div class="col-xs-6 col-sm-3"> 3 of 25 Enrolled</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default row" style="margin-top: 0px; margin-bottom: 0px;" id="rowpanel_2">
+  <div class="panel-heading panel-heading-custom"><h2 style="margin:0px;"><a id="class_id_41110" href="#">MATH 19A - 01&nbsp;&nbsp;&nbsp;Calculus For Science, Engineering</a></h2></div>
+  <div class="panel-body" style="padding-top: 0px;">
+    <div class="row ">
+      <div class="col-xs-6 col-sm-3">Class Number: <a id="class_nbr_41110" href="#">41110</a></div>
+      <div class="col-xs-6 col-sm-3"><i class="fa fa-user" aria-hidden="true"></i><i class="sr-only">Instructor:</i> A. Nguyen</div>
+      <div class="col-xs-12 col-sm-6">
+        <div class="col-xs-6 col-sm-6"><i class="fa fa-location-arrow" aria-hidden="true"></i><i class="sr-only">Location:</i> LEC: Natural Sciences 2 101</div>
+        <div class="col-xs-6 col-sm-6"><i class="fa fa-clock-o" aria-hidden="true"></i><i class="sr-only">Day and Time:</i> MWF 1:00PM-1:50PM  </div>
+      </div>
+      <div class="col-xs-6 col-sm-3"> 20 of 20 Enrolled</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default row" style="margin-top: 0px; margin-bottom: 0px;" id="rowpanel_3">
+  <div class="panel-heading panel-heading-custom"><h2 style="margin:0px;"><a id="class_id_42250" href="#">PHYS 5 - 01&nbsp;&nbsp;&nbsp;Introduction To Physics</a></h2></div>
+  <div class="panel-body" style="padding-top: 0px;">
+    <div class="row ">
+      <div class="col-xs-6 col-sm-3">Class Number: <a id="class_nbr_42250" href="#">42250</a></div>
+      <div class="col-xs-6 col-sm-3"><i class="fa fa-user" aria-hidden="true"></i><i class="sr-only">Instructor:</i> Staff</div>
+      <div class="col-xs-12 col-sm-6">
+        <div class="col-xs-6 col-sm-6"><i class="fa fa-location-arrow" aria-hidden="true"></i><i class="sr-only">Location:</i> Asynchronous Online</div>
+        <div class="col-xs-6 col-sm-6"><i class="fa fa-clock-o" aria-hidden="true"></i><i class="sr-only">Day and Time:</i> Asynchronous Online  </div>
+      </div>
+      <div class="col-xs-6 col-sm-3"> 10 of 40 Enrolled</div>
+    </div>
+  </div>
 </div>`
 
-const RESULTS_TABLE = `
-<table class="PSLEVEL1GRIDNBO" id="win0divSSR_CLSRSLT_WRK_GROUPBOX2">
-  <tbody>
-    <tr>
-      <th>Status</th><th>Class Nbr</th><th>Course</th><th>Section</th>
-      <th>Days &amp; Times</th><th>Room</th><th>Instructor</th><th>Seats</th>
-    </tr>
-
-    <!-- Row 0: MWF lecture, linked to its discussion section (row 1) -->
-    <tr class="crsrow1" id="trSSR_CLSRSLT_WRK$0">
-      <td><span id="CLASS_STATUS$0">Open</span></td>
-      <td><span id="CLASS_NBR$0">40325</span></td>
-      <td><span id="CLASS_SUBJ_CATLG$0">CSE 101</span></td>
-      <td><span id="CLASS_SECTION$0">01</span></td>
-      <td><span id="MTG_DAYTIME$0">MWF 10:00AM-10:50AM</span></td>
-      <td><span id="MTG_ROOM$0">Physical Sciences 110</span></td>
-      <td><span id="MTG_INSTR$0">J. Smith</span></td>
-      <td><span id="CLASS_SEATS$0">5 / 30</span></td>
-      <td><span id="CLASS_LINKED$0" data-linked-keys="CSE 101 01A"></span></td>
-    </tr>
-
-    <!-- Row 1: TTh discussion, linked back to the lecture (row 0) -->
-    <tr class="crsrow2" id="trSSR_CLSRSLT_WRK$1">
-      <td><span id="CLASS_STATUS$1">Open</span></td>
-      <td><span id="CLASS_NBR$1">40326</span></td>
-      <td><span id="CLASS_SUBJ_CATLG$1">CSE 101</span></td>
-      <td><span id="CLASS_SECTION$1">01A</span></td>
-      <td><span id="MTG_DAYTIME$1">TTh 2:00PM-3:45PM</span></td>
-      <td><span id="MTG_ROOM$1">Soc Sci 1 141</span></td>
-      <td><span id="MTG_INSTR$1">Staff</span></td>
-      <td><span id="CLASS_SEATS$1">3 / 25</span></td>
-      <td><span id="CLASS_LINKED$1" data-linked-keys="CSE 101 01"></span></td>
-    </tr>
-
-    <!-- Row 2: standalone section, no links, no open seats -->
-    <tr class="crsrow1" id="trSSR_CLSRSLT_WRK$2">
-      <td><span id="CLASS_STATUS$2">Closed</span></td>
-      <td><span id="CLASS_NBR$2">41110</span></td>
-      <td><span id="CLASS_SUBJ_CATLG$2">MATH 19A</span></td>
-      <td><span id="CLASS_SECTION$2">01</span></td>
-      <td><span id="MTG_DAYTIME$2">MWF 1:00PM-1:50PM</span></td>
-      <td><span id="MTG_ROOM$2">Natural Sciences 2 101</span></td>
-      <td><span id="MTG_INSTR$2">A. Nguyen</span></td>
-      <td><span id="CLASS_SEATS$2">0 / 20</span></td>
-    </tr>
-
-    <!-- Row 3: async/TBA section — no meeting time to parse -->
-    <tr class="crsrow2" id="trSSR_CLSRSLT_WRK$3">
-      <td><span id="CLASS_STATUS$3">Open</span></td>
-      <td><span id="CLASS_NBR$3">42250</span></td>
-      <td><span id="CLASS_SUBJ_CATLG$3">PHYS 5</span></td>
-      <td><span id="CLASS_SECTION$3">01</span></td>
-      <td><span id="MTG_DAYTIME$3">TBA</span></td>
-      <td><span id="MTG_ROOM$3">TBA</span></td>
-      <td><span id="MTG_INSTR$3">Staff</span></td>
-      <td><span id="CLASS_SEATS$3">10 / 40</span></td>
-    </tr>
-  </tbody>
-</table>`
-
-const FULL_FIXTURE = `${TERM_HEADER}${RESULTS_TABLE}`
-
-describe('parseSearchResults (synthetic MyUCSC fixture, happy-dom)', () => {
+describe('parseSearchResults (pisa.ucsc.edu fixture, happy-dom)', () => {
   it('parses every class row into a Section plus its row element', () => {
-    document.body.innerHTML = FULL_FIXTURE
+    document.body.innerHTML = RESULTS_FIXTURE
     const results = parseSearchResults(document)
 
     expect(results.map((r) => `${r.section.courseCode} ${r.section.sectionNumber}`)).toEqual([
-      'CSE 101 01',
+      'ANTH 130F 01',
       'CSE 101 01A',
       'MATH 19A 01',
       'PHYS 5 01',
     ])
     for (const { rowEl } of results) {
-      expect(rowEl.tagName).toBe('TR')
+      expect(rowEl.id).toMatch(/^rowpanel_\d+$/)
     }
   })
 
-  it('converts an MWF meeting time into correct minute-of-day math', () => {
-    document.body.innerHTML = FULL_FIXTURE
+  it('parses the instructor and strips the modality prefix off the room', () => {
+    document.body.innerHTML = RESULTS_FIXTURE
+    const [lecture] = parseSearchResults(document)
+    expect(lecture?.section.instructor).toBe('Shange-Binion,S.T.')
+    expect(lecture?.section.meetingPattern[0]?.location).toBe('Soc Sci 1 110')
+  })
+
+  it('converts an MW meeting time into correct minute-of-day math', () => {
+    document.body.innerHTML = RESULTS_FIXTURE
     const [lecture] = parseSearchResults(document)
     expect(lecture?.section.meetingPattern).toEqual([
-      { days: ['M', 'W', 'F'], startMinute: 600, endMinute: 650, location: 'Physical Sciences 110' },
+      { days: ['M', 'W'], startMinute: 1040, endMinute: 1135, location: 'Soc Sci 1 110' },
     ])
   })
 
   it('converts a TTh meeting time into correct minute-of-day math', () => {
-    document.body.innerHTML = FULL_FIXTURE
+    document.body.innerHTML = RESULTS_FIXTURE
     const discussion = parseSearchResults(document)[1]
     expect(discussion?.section.meetingPattern).toEqual([
       { days: ['T', 'Th'], startMinute: 840, endMinute: 945, location: 'Soc Sci 1 141' },
     ])
   })
 
-  it('produces matching linkedSectionKeys on both sides of a lecture+discussion pair', () => {
-    document.body.innerHTML = FULL_FIXTURE
-    const [lecture, discussion] = parseSearchResults(document)
-    expect(lecture?.section.linkedSectionKeys).toEqual(['CSE 101 01A'])
-    expect(discussion?.section.linkedSectionKeys).toEqual(['CSE 101 01'])
+  it('computes open seats as capacity minus enrolled', () => {
+    document.body.innerHTML = RESULTS_FIXTURE
+    const [lecture] = parseSearchResults(document)
+    expect(lecture?.section.seatsOpen).toBe(10)
   })
 
-  it('leaves linkedSectionKeys undefined for a section with no links', () => {
-    document.body.innerHTML = FULL_FIXTURE
-    const standalone = parseSearchResults(document)[2]
-    expect(standalone?.section.linkedSectionKeys).toBeUndefined()
+  it('reads 0 open seats for a fully enrolled section', () => {
+    document.body.innerHTML = RESULTS_FIXTURE
+    const full = parseSearchResults(document)[2]
+    expect(full?.section.seatsOpen).toBe(0)
   })
 
-  it('parses closed-section seat counts as 0 open seats', () => {
-    document.body.innerHTML = FULL_FIXTURE
-    const standalone = parseSearchResults(document)[2]
-    expect(standalone?.section.seatsOpen).toBe(0)
+  it('produces an empty meetingPattern for an asynchronous/TBA row instead of throwing', () => {
+    document.body.innerHTML = RESULTS_FIXTURE
+    const async_ = parseSearchResults(document)[3]
+    expect(async_?.section.meetingPattern).toEqual([])
   })
 
-  it('produces an empty meetingPattern for a TBA/async row instead of throwing', () => {
-    document.body.innerHTML = FULL_FIXTURE
-    const tba = parseSearchResults(document)[3]
-    expect(tba?.section.meetingPattern).toEqual([])
-  })
-
-  it('returns an empty array on a page with no results table', () => {
+  it('returns an empty array on a page with no results grid', () => {
     document.body.innerHTML = '<p>no results yet</p>'
     expect(parseSearchResults(document)).toEqual([])
-  })
-})
-
-describe('getCurrentTerm', () => {
-  it('reads the currently selected term', () => {
-    document.body.innerHTML = FULL_FIXTURE
-    expect(getCurrentTerm(document)).toBe('Fall 2026')
-  })
-
-  it('returns null when the page has no term element', () => {
-    document.body.innerHTML = '<p>not a MyUCSC page</p>'
-    expect(getCurrentTerm(document)).toBeNull()
   })
 })
 
@@ -170,7 +149,7 @@ describe('waitForResults', () => {
   it('resolves once results are asynchronously added to the DOM', async () => {
     const promise = waitForResults(container, { timeoutMs: 1000 })
     setTimeout(() => {
-      container.innerHTML = RESULTS_TABLE
+      container.innerHTML = RESULTS_FIXTURE
     }, 0)
 
     const resultEl = await promise
@@ -178,7 +157,7 @@ describe('waitForResults', () => {
   })
 
   it('resolves immediately if results are already present', async () => {
-    container.innerHTML = RESULTS_TABLE
+    container.innerHTML = RESULTS_FIXTURE
     const resultEl = await waitForResults(container)
     expect(resultEl).toBeInstanceOf(Element)
   })
@@ -187,5 +166,20 @@ describe('waitForResults', () => {
     await expect(waitForResults(container, { timeoutMs: 20 })).rejects.toThrow(
       /no MyUCSC search results appeared/i,
     )
+  })
+})
+
+// getCurrentTerm's selector is unverified against the current site (see the
+// ponytail note on it in myucsc.ts) -- these tests just pin its current,
+// known-unverified behavior rather than asserting it's correct.
+describe('getCurrentTerm', () => {
+  it('returns null against the real results fixture (selector does not match it)', () => {
+    document.body.innerHTML = RESULTS_FIXTURE
+    expect(getCurrentTerm(document)).toBeNull()
+  })
+
+  it('returns null when the page has no term element', () => {
+    document.body.innerHTML = '<p>not a MyUCSC page</p>'
+    expect(getCurrentTerm(document)).toBeNull()
   })
 })
