@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { parsePrereq } from '@slugpath/prereq-parser'
 import { usePlans, useTakenCourses } from '../storage/hooks'
 import { loadCatalog } from './catalogSnapshot'
-import { normalizeCode } from './graphModel'
-import { toPrereqSegment, type PrereqSegment } from './prereqText'
+import { normalizeCode, toPrereqSegment, type PrereqSegment } from './prereqText'
 
 /**
  * Direct-prereqs-only popover: shows what a single course requires, as text,

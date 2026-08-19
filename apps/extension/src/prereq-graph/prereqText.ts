@@ -1,8 +1,14 @@
 // Pure AST -> display-tree transform for the direct-prereqs-only popover.
-// Kept separate from PrereqPopover.tsx (same split as graphModel.ts vs
-// PrereqGraphPanel.tsx) so the AND/OR/constraint-unwrapping logic is
-// unit-testable without rendering React.
+// Kept separate from PrereqPopover.tsx so the AND/OR/constraint-unwrapping
+// logic is unit-testable without rendering React.
 import type { PrereqNode } from '@slugpath/prereq-parser'
+
+// Course codes are compared/looked-up in a couple of places (taken/planned
+// set membership) where whitespace and casing shouldn't matter — e.g.
+// "CSE 12" from the catalog vs "cse12" from somewhere else.
+export function normalizeCode(code: string): string {
+  return code.replace(/\s+/g, '').toUpperCase()
+}
 
 export type PrereqSegment =
   | { kind: 'course'; code: string }

@@ -7,7 +7,7 @@ import catalogVersion from '../../packages/catalog-snapshot/data/version.json' w
 export default defineManifest({
   manifest_version: 3,
   name: 'SlugPath',
-  description: 'Plan UCSC schedules, prereqs, and GE progress without leaving MyUCSC or the catalog.',
+  description: 'Plan UCSC schedules and check prereqs without leaving MyUCSC.',
   version: pkg.version,
   version_name: `${pkg.version} (catalog ${catalogVersion.version})`,
   permissions: ['storage', 'identity'],
@@ -20,16 +20,15 @@ export default defineManifest({
       // same file silently lose the first entry's matches (only the last
       // one survives) — breaking the dynamic-import chunk load, and with it
       // the whole content script, on whichever host got dropped.
-      // all_frames: true because MyUCSC (PeopleSoft) renders class-search
-      // results inside a nested target iframe, not the top-level document —
-      // the content script needs to run in every frame to reach it. It's a
-      // no-op on any extra frame catalog.ucsc.edu doesn't have, and
-      // index.tsx gates panel mounting to the top frame either way.
+      // all_frames: true because MyUCSC renders class-search results inside
+      // a nested target iframe, not the top-level document — the content
+      // script needs to run in every frame to reach it. index.tsx gates
+      // panel mounting to the top frame either way.
       // pisa.ucsc.edu: MyUCSC's "Main Content" iframe navigates there for
       // the actual class-search results grid (a UCSC-built page, not
       // PeopleSoft-rendered) — without it listed here, that frame never
       // gets the content script and the row buttons never appear.
-      matches: ['https://catalog.ucsc.edu/*', 'https://my.ucsc.edu/*', 'https://pisa.ucsc.edu/*'],
+      matches: ['https://my.ucsc.edu/*', 'https://pisa.ucsc.edu/*'],
       js: ['src/content/index.tsx'],
       all_frames: true,
     },
