@@ -68,6 +68,36 @@ describe('computeGEProgress', () => {
   })
 })
 
+describe('computeGEProgress assignments', () => {
+  it('credits a multi-GE course only toward its assigned code', () => {
+    const progress = computeGEProgress(
+      { catalog, takenCourseCodes: ['CRES 10'], plannedCourseCodes: [], majorCode: null, assignments: { 'CRES 10': 'ER' } },
+      requirements,
+    )
+    expect(progress.find((p) => p.code === 'CC')?.satisfied).toBe(false)
+    expect(progress.find((p) => p.code === 'CC')?.creditedBy).toEqual([])
+    expect(progress.find((p) => p.code === 'ER')?.creditedBy).toEqual([{ courseCode: 'CRES 10', status: 'taken' }])
+  })
+
+  it('leaves credit unaffected for a course with no assignment entry', () => {
+    const progress = computeGEProgress(
+      { catalog, takenCourseCodes: ['CRES 10'], plannedCourseCodes: [], majorCode: null, assignments: {} },
+      requirements,
+    )
+    expect(progress.find((p) => p.code === 'CC')?.satisfied).toBe(true)
+    expect(progress.find((p) => p.code === 'ER')?.satisfied).toBe(true)
+  })
+
+  it('defaults to crediting every tagged GE when assignments is omitted', () => {
+    const progress = computeGEProgress(
+      { catalog, takenCourseCodes: ['CRES 10'], plannedCourseCodes: [], majorCode: null },
+      requirements,
+    )
+    expect(progress.find((p) => p.code === 'CC')?.satisfied).toBe(true)
+    expect(progress.find((p) => p.code === 'ER')?.satisfied).toBe(true)
+  })
+})
+
 describe('computeGESlots', () => {
   it('collapses a choice group into one slot, satisfied if any option is', () => {
     const slots = computeGESlots(

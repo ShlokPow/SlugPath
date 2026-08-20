@@ -35,6 +35,12 @@ export interface GEProgressInput {
   takenCourseCodes: string[]
   plannedCourseCodes: string[]
   majorCode: string | null
+  // courseCode -> GE code, from the "pick a primary GE" assignment UI for
+  // courses tagged toward 2+ GEs. A course with an entry here only credits
+  // its assigned code; omitted (default undefined, same as before this field
+  // existed) keeps crediting every GE it's tagged for — MyUCSC row badges
+  // rely on that default and pass no assignments.
+  assignments?: Record<string, string>
 }
 
 function creditsFor(code: string, input: GEProgressInput): GECredit[] {
@@ -42,6 +48,8 @@ function creditsFor(code: string, input: GEProgressInput): GECredit[] {
   const seen = new Set<string>()
   const add = (courseCode: string, status: GECreditStatus) => {
     if (seen.has(courseCode)) return
+    const assigned = input.assignments?.[courseCode]
+    if (assigned && assigned !== code) return
     seen.add(courseCode)
     credits.push({ courseCode, status })
   }

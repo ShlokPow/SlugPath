@@ -34,6 +34,10 @@ export default defineManifest({
     },
   ],
   options_page: 'src/options/index.html',
+  // No default_icon/default_popup: icon assets don't exist yet (later polish
+  // item) and the popup is a full tab (see background's onClicked), not a
+  // toolbar dropdown.
+  action: {},
   background: {
     service_worker: 'src/background/index.ts',
     type: 'module',

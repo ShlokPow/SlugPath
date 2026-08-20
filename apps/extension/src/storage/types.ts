@@ -48,4 +48,7 @@ export interface Settings {
   calendarLinked: boolean
   defaultTerm: string | null
   activePlanId: string | null
+  // courseCode -> GE code, from the GE tracker's "pick a primary GE" picker
+  // for courses that double-dip toward 2+ GEs. See docs/migrations.md.
+  geAssignments: Record<string, string> | null
 }

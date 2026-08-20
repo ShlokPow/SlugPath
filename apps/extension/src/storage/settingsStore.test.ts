@@ -16,6 +16,7 @@ describe('settingsStore', () => {
       calendarLinked: true,
       defaultTerm: 'fall-2025',
       activePlanId: 'plan-1',
+      geAssignments: { 'CRES 10': 'ER' },
     })
 
     expect(await getSettings()).toEqual({
@@ -24,6 +25,7 @@ describe('settingsStore', () => {
       calendarLinked: true,
       defaultTerm: 'fall-2025',
       activePlanId: 'plan-1',
+      geAssignments: { 'CRES 10': 'ER' },
     })
   })
 })
