@@ -100,6 +100,20 @@ export function computeGESlots(input: GEProgressInput, requirements: GERequireme
   return [...slots.values()]
 }
 
+/** Returns `current` with `courseCode` mapped to `geCode`, or removed if
+ * `geCode` is falsy (the "count toward all" option) — the assignment-UI
+ * select's onChange resolves straight to this. */
+export function applyGEAssignment(
+  current: Record<string, string> | null | undefined,
+  courseCode: string,
+  geCode: string,
+): Record<string, string> {
+  const next = { ...current }
+  if (geCode) next[courseCode] = geCode
+  else delete next[courseCode]
+  return next
+}
+
 /** Courses that are credited toward more than one GE at once — the set the
  * "assignment UI" (per the Phase 5 spec) lets a user pick a primary GE for. */
 export function findMultiGECourses(progress: GEProgress[]): Map<string, string[]> {

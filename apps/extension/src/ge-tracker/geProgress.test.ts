@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createCatalogIndex, type CatalogSnapshot, type GERequirement } from '@slugpath/catalog-snapshot'
-import { computeGEProgress, computeGESlots, findMultiGECourses } from './geProgress'
+import { applyGEAssignment, computeGEProgress, computeGESlots, findMultiGECourses } from './geProgress'
 
 const snapshot: CatalogSnapshot = {
   version: '2026-2027',
@@ -132,5 +132,44 @@ describe('findMultiGECourses', () => {
       requirements,
     )
     expect(findMultiGECourses(progress).has('AM 3')).toBe(false)
+  })
+
+  it('keeps listing a course after it is assigned, so the picker that set the assignment stays reachable', () => {
+    // GETrackerPage.tsx deliberately calls findMultiGECourses on progress
+    // computed WITHOUT assignments applied, then separately computes the
+    // displayed slots WITH assignments. Locks that composition in here since
+    // it can't be observed from a component test (none exist in this repo).
+    const unassignedProgress = computeGEProgress({ catalog, takenCourseCodes: ['CRES 10'], plannedCourseCodes: [], majorCode: null }, requirements)
+    const multi = findMultiGECourses(unassignedProgress)
+    expect(multi.get('CRES 10')?.sort()).toEqual(['CC', 'ER'])
+
+    const assignedProgress = computeGEProgress(
+      { catalog, takenCourseCodes: ['CRES 10'], plannedCourseCodes: [], majorCode: null, assignments: { 'CRES 10': 'ER' } },
+      requirements,
+    )
+    expect(findMultiGECourses(assignedProgress).has('CRES 10')).toBe(false)
+  })
+})
+
+describe('applyGEAssignment', () => {
+  it('adds an assignment for a course with no prior entry', () => {
+    expect(applyGEAssignment({}, 'CRES 10', 'ER')).toEqual({ 'CRES 10': 'ER' })
+  })
+
+  it('overwrites an existing assignment for the same course', () => {
+    expect(applyGEAssignment({ 'CRES 10': 'CC' }, 'CRES 10', 'ER')).toEqual({ 'CRES 10': 'ER' })
+  })
+
+  it('removes the assignment when geCode is empty ("count toward all")', () => {
+    expect(applyGEAssignment({ 'CRES 10': 'ER' }, 'CRES 10', '')).toEqual({})
+  })
+
+  it('leaves other courses\' assignments untouched', () => {
+    expect(applyGEAssignment({ 'AM 3': 'MF' }, 'CRES 10', 'ER')).toEqual({ 'AM 3': 'MF', 'CRES 10': 'ER' })
+  })
+
+  it('treats a null/undefined current map as empty', () => {
+    expect(applyGEAssignment(null, 'CRES 10', 'ER')).toEqual({ 'CRES 10': 'ER' })
+    expect(applyGEAssignment(undefined, 'CRES 10', 'ER')).toEqual({ 'CRES 10': 'ER' })
   })
 })

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { loadCatalog } from '../prereq-graph/catalogSnapshot'
 import { usePlans, useSettings, useTakenCourses } from '../storage/hooks'
-import { computeGEProgress, computeGESlots, findMultiGECourses, type GESlot } from './geProgress'
+import { applyGEAssignment, computeGEProgress, computeGESlots, findMultiGECourses, type GESlot } from './geProgress'
 
 export function GETrackerPage() {
   const [catalog, setCatalog] = useState<Awaited<ReturnType<typeof loadCatalog>> | null>(null)
@@ -54,10 +54,7 @@ export function GETrackerPage() {
   }, [catalog, takenCourseCodes, plannedCourseCodes, settings.majorCode])
 
   function assign(courseCode: string, geCode: string) {
-    const next = { ...(settings.geAssignments ?? {}) }
-    if (geCode) next[courseCode] = geCode
-    else delete next[courseCode]
-    setSettings({ geAssignments: next })
+    setSettings({ geAssignments: applyGEAssignment(settings.geAssignments, courseCode, geCode) })
   }
 
   if (!catalog) {
