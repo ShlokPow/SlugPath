@@ -2,6 +2,7 @@ import { Panel } from './Panel'
 import { createShadowMount } from './shadowMount'
 import { injectAddToPlanButtons } from './scheduleInjection'
 import { injectPrereqPopovers } from './prereqPopoverInjection'
+import { injectGEBadges } from './geBadgeInjection'
 import { SchedulePanel } from '../schedule/SchedulePanel'
 
 // MyUCSC's my.ucsc.edu content script runs in every frame (manifest.config.ts
@@ -30,4 +31,5 @@ if (location.hostname === 'my.ucsc.edu' && isTopFrame) {
 if (location.hostname === 'my.ucsc.edu' || location.hostname === 'pisa.ucsc.edu') {
   void injectAddToPlanButtons(document)
   void injectPrereqPopovers(document)
+  void injectGEBadges(document)
 }
