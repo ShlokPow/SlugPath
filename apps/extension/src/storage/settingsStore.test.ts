@@ -17,6 +17,8 @@ describe('settingsStore', () => {
       defaultTerm: 'fall-2025',
       activePlanId: 'plan-1',
       geAssignments: { 'CRES 10': 'ER' },
+      degreeProgressGECodes: ['CC', 'MF'],
+      degreeProgressImportedAt: 1755600000000,
     })
 
     expect(await getSettings()).toEqual({
@@ -26,6 +28,8 @@ describe('settingsStore', () => {
       defaultTerm: 'fall-2025',
       activePlanId: 'plan-1',
       geAssignments: { 'CRES 10': 'ER' },
+      degreeProgressGECodes: ['CC', 'MF'],
+      degreeProgressImportedAt: 1755600000000,
     })
   })
 })

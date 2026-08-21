@@ -78,8 +78,19 @@ export function computeGEProgress(input: GEProgressInput, requirements: GERequir
 }
 
 /** Collapses grouped requirements (Perspectives, Practice) into one slot each, so a
- * progress summary counts requirement *slots* (11) rather than flat codes (15). */
-export function computeGESlots(input: GEProgressInput, requirements: GERequirement[] = GE_REQUIREMENTS): GESlot[] {
+ * progress summary counts requirement *slots* (11) rather than flat codes (15).
+ *
+ * `confirmedSlotIds` is for a GE the MyUCSC Degree Progress Report already
+ * reports satisfied but with no specific course attached (its row was
+ * collapsed at import time -- see adapters/degreeProgress.ts) -- keyed by
+ * slot id (a plain code like "CC", or a group id like "PE" when the DPR only
+ * reports group-level satisfaction). It only ever turns satisfied *on*; it
+ * can't take away a slot that course-crediting already satisfied. */
+export function computeGESlots(
+  input: GEProgressInput,
+  requirements: GERequirement[] = GE_REQUIREMENTS,
+  confirmedSlotIds?: ReadonlySet<string>,
+): GESlot[] {
   const progress = computeGEProgress(input, requirements)
   const slots = new Map<string, GESlot>()
   for (const p of progress) {
@@ -95,6 +106,11 @@ export function computeGESlots(input: GEProgressInput, requirements: GERequireme
         options: [p],
         satisfied: p.satisfied,
       })
+    }
+  }
+  if (confirmedSlotIds) {
+    for (const slot of slots.values()) {
+      if (confirmedSlotIds.has(slot.slotId)) slot.satisfied = true
     }
   }
   return [...slots.values()]

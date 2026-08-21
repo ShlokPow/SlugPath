@@ -114,6 +114,42 @@ describe('computeGESlots', () => {
     const slots = computeGESlots({ catalog, takenCourseCodes: [], plannedCourseCodes: [], majorCode: null }, requirements)
     expect(slots.find((s) => s.slotId === 'CC')?.label).toBe('Cross-Cultural Analysis')
   })
+
+  describe('confirmedSlotIds', () => {
+    it('marks an otherwise-uncredited slot satisfied when its id is confirmed', () => {
+      const slots = computeGESlots(
+        { catalog, takenCourseCodes: [], plannedCourseCodes: [], majorCode: null },
+        requirements,
+        new Set(['ER']),
+      )
+      const er = slots.find((s) => s.slotId === 'ER')
+      expect(er?.satisfied).toBe(true)
+      expect(er?.options[0]?.creditedBy).toEqual([]) // still no specific course attributed
+    })
+
+    it('confirms a grouped slot by its group id, not a member code', () => {
+      const slots = computeGESlots(
+        { catalog, takenCourseCodes: [], plannedCourseCodes: [], majorCode: null },
+        requirements,
+        new Set(['PE']),
+      )
+      expect(slots.find((s) => s.slotId === 'PE')?.satisfied).toBe(true)
+    })
+
+    it('never un-satisfies a slot that course-crediting already satisfied', () => {
+      const slots = computeGESlots(
+        { catalog, takenCourseCodes: ['CRES 10'], plannedCourseCodes: [], majorCode: null },
+        requirements,
+        new Set(), // empty -- confirms nothing
+      )
+      expect(slots.find((s) => s.slotId === 'CC')?.satisfied).toBe(true)
+    })
+
+    it('leaves everything as computeGESlots without it when omitted', () => {
+      const slots = computeGESlots({ catalog, takenCourseCodes: [], plannedCourseCodes: [], majorCode: null }, requirements)
+      expect(slots.find((s) => s.slotId === 'ER')?.satisfied).toBe(false)
+    })
+  })
 })
 
 describe('findMultiGECourses', () => {

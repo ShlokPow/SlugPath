@@ -9,6 +9,8 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultTerm: null,
   activePlanId: null,
   geAssignments: null,
+  degreeProgressGECodes: null,
+  degreeProgressImportedAt: null,
 }
 
 export async function getSettings(): Promise<Settings> {

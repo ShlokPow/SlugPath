@@ -28,16 +28,25 @@ export function GETrackerPage() {
     return (activePlan?.sections ?? []).map((s) => s.courseCode)
   }, [plans, settings.activePlanId])
 
+  const confirmedSlotIds = useMemo(
+    () => new Set(settings.degreeProgressGECodes ?? []),
+    [settings.degreeProgressGECodes],
+  )
+
   const slots = useMemo(() => {
     if (!catalog) return []
-    return computeGESlots({
-      catalog: catalog.index,
-      takenCourseCodes,
-      plannedCourseCodes,
-      majorCode: settings.majorCode,
-      assignments: settings.geAssignments ?? undefined,
-    })
-  }, [catalog, takenCourseCodes, plannedCourseCodes, settings.majorCode, settings.geAssignments])
+    return computeGESlots(
+      {
+        catalog: catalog.index,
+        takenCourseCodes,
+        plannedCourseCodes,
+        majorCode: settings.majorCode,
+        assignments: settings.geAssignments ?? undefined,
+      },
+      undefined,
+      confirmedSlotIds,
+    )
+  }, [catalog, takenCourseCodes, plannedCourseCodes, settings.majorCode, settings.geAssignments, confirmedSlotIds])
 
   // Multi-GE eligibility is computed WITHOUT assignments applied: once a course
   // is assigned, it only credits one GE, which would otherwise make it look
@@ -107,6 +116,7 @@ export function GETrackerPage() {
 }
 
 function SlotRow({ slot }: { slot: GESlot }) {
+  const hasCreditedCourse = slot.options.some((opt) => opt.creditedBy.length > 0)
   return (
     <div style={{ padding: '10px 0', borderBottom: '1px solid #eee' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -120,6 +130,12 @@ function SlotRow({ slot }: { slot: GESlot }) {
               {opt.name}: {opt.creditedBy.map((c) => `${c.courseCode} (${c.status})`).join(', ')}
             </div>
           ),
+      )}
+      {/* Satisfied via an imported Degree Progress Report row that was collapsed
+          at import time, so there's no specific course to show (see
+          adapters/degreeProgress.ts) -- not the same as "no data at all". */}
+      {slot.satisfied && !hasCreditedCourse && (
+        <div style={{ fontSize: 12, color: '#555', marginTop: 2 }}>Confirmed by Degree Progress Report</div>
       )}
     </div>
   )
