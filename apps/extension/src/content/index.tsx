@@ -3,6 +3,7 @@ import { createShadowMount } from './shadowMount'
 import { injectAddToPlanButtons } from './scheduleInjection'
 import { injectPrereqPopovers } from './prereqPopoverInjection'
 import { injectGEBadges } from './geBadgeInjection'
+import { injectDegreeProgressImport } from './degreeProgressImport'
 import { SchedulePanel } from '../schedule/SchedulePanel'
 
 // MyUCSC's my.ucsc.edu content script runs in every frame (manifest.config.ts
@@ -32,4 +33,12 @@ if (location.hostname === 'my.ucsc.edu' || location.hostname === 'pisa.ucsc.edu'
   void injectAddToPlanButtons(document)
   void injectPrereqPopovers(document)
   void injectGEBadges(document)
+}
+
+// Degree Progress Report (My Academics -> Degree Progress Report) only
+// renders under my.ucsc.edu itself, not the pisa.ucsc.edu results page --
+// see adapters/degreeProgress.ts. Safe to run on every my.ucsc.edu
+// page/frame regardless: it no-ops wherever the GE section isn't present.
+if (location.hostname === 'my.ucsc.edu') {
+  injectDegreeProgressImport(document)
 }
