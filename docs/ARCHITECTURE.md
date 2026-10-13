@@ -31,16 +31,17 @@ original plan.
 
 ```
 apps/extension/           the extension itself (content scripts, panels, storage)
-  src/adapters/            DOM-scraping layer for external sites (MyUCSC)
+  src/adapters/            DOM-scraping layer for external sites (MyUCSC, Degree Progress Report)
   src/background/          MV3 service worker
   src/content/             content-script entry + DOM injection glue
+  src/ge-tracker/          GE progress logic + the standalone tracker page
   src/options/             extension options page (not a content script)
   src/prereq-graph/        prereq popover UI + its pure display-transform logic
   src/schedule/            schedule domain logic (conflicts) + panel UI
   src/storage/             Dexie DB, chrome.storage settings, Zustand bridge, hooks
   manifest.config.ts        MV3 manifest, generated via @crxjs/vite-plugin
 packages/prereq-parser/   tokenizer + recursive-descent parser for catalog prereq prose
-packages/catalog-snapshot/ course data types + query API + the bundled gzipped snapshot
+packages/catalog-snapshot/ course data types + query API + the bundled gzipped snapshot + the GE requirements dataset
 scripts/                  one-off Node script that scrapes catalog.ucsc.edu to build the snapshot
 docs/                     this file, docs/migrations.md, docs/HANDOFF.md (session log, not a reference doc)
 ```
@@ -95,12 +96,12 @@ every subsystem.
    so callers can both read structured data and inject something next to the
    row it came from. One row throwing never aborts the whole scan (each row
    is wrapped in try/catch).
-7. **Row injection.** `scheduleInjection.ts` and `prereqPopoverInjection.tsx`
-   both call `parseSearchResults`/`waitForResults` independently and append
-   their own `<button>` into each row, marked with their own
-   `data-slugpath-*` attribute so a `MutationObserver`-triggered re-scan
-   (MyUCSC re-searching replaces the grid without a page navigation) never
-   double-injects.
+7. **Row injection.** `scheduleInjection.ts`, `prereqPopoverInjection.tsx`,
+   and `geBadgeInjection.ts` (§4.7) each independently call
+   `parseSearchResults`/`waitForResults` and append their own
+   button/badges into each row, marked with their own `data-slugpath-*`
+   attribute so a `MutationObserver`-triggered re-scan (MyUCSC re-searching
+   replaces the grid without a page navigation) never double-injects.
 8. **"Add to plan" click** → `handleAddClick` reads the active plan id out of
    the Zustand settings store, resolves the section's *atomic group* (itself
    plus any linked sections — see §4.3), and writes each one to Dexie
@@ -389,23 +390,135 @@ catalog source page doesn't expose structured term-offered data at all
 currently-bundled snapshot's generation, so existing cached data won't have
 it.
 
-### 4.7 Options page (`src/options/`)
+### 4.7 GE requirement tracker (`src/ge-tracker/`, `packages/catalog-snapshot/src/geRequirements.ts`, `src/adapters/degreeProgress.ts`)
+
+Three separate UI surfaces — inline MyUCSC row badges, an always-on
+persistent widget, and a standalone tracker page — all read from one pure
+computation, so "is this GE satisfied" can never drift between surfaces.
+
+**The dataset** (`geRequirements.ts`): 15 leaf GE codes, 13 of them flat
+(`CC`, `ER`, `IM`, `MF`, `SI`, `SR`, `TA`, `C`, `DC`) and 6 grouped into two
+3-way choice groups (`PE-E`/`PE-H`/`PE-T` "Perspectives",
+`PR-E`/`PR-C`/`PR-S` "Practice") that each collapse to one requirement slot
+— satisfying *any one* member of a group fills that group's whole slot, so
+15 leaf codes become 11 real requirement slots. **DC is a structural
+exception**: every other code is a general-catalog tag readable off
+`CourseSnapshot.geCodes`, but DC is satisfied by 1–3 courses *defined by the
+student's specific major* (each major's own advising sheet, not a catalog
+tag) — so `DC_COURSES_BY_MAJOR` ships empty rather than guessed, keyed by
+major code for whenever real per-major data is sourced.
+
+**The pure core** (`ge-tracker/geProgress.ts`) — no DOM/storage access, same
+pure/impure split used throughout this codebase (`prereqText.ts`,
+`conflicts.ts`):
+- `computeGEProgress` — for each requirement code, which taken/planned
+  courses credit it (via catalog `geCodes`, or the `DC_COURSES_BY_MAJOR`
+  lookup for DC specifically).
+- `computeGESlots` — collapses progress into the 11 real slots (grouping by
+  `group`), optionally folding in `confirmedSlotIds` for a GE the Degree
+  Progress Report reported satisfied with no specific course attached (see
+  below) — that input can only turn a slot satisfied, never un-satisfy one
+  course-crediting already proved.
+- `findMultiGECourses` — courses credited toward 2+ GEs at once, the set the
+  assignment picker (below) operates on. **Deliberately computed from
+  progress *without* assignments applied** — if it used post-assignment
+  progress, assigning a course to one GE would make it look single-GE and
+  the very picker that set the assignment would disappear.
+- `applyGEAssignment` — pure reducer for the "pick a primary GE" picker;
+  assigning `''` (falsy) removes the assignment rather than setting it,
+  which is the "count toward all" default.
+
+**Three UI surfaces, one source of truth:**
+- **Inline MyUCSC row badges** (`content/geBadgeInjection.ts`) — same
+  injection pattern as `scheduleInjection.ts`/`prereqPopoverInjection.tsx`
+  (parse rows, idempotent re-scan on mutation). A code already satisfied by
+  a taken/planned course renders as a filled chip instead of outlined, so
+  double-dipping is visible while scanning search results, not just on the
+  tracker page.
+- **The persistent `Panel.tsx` widget** — repurposed from an inert "Hello
+  SlugPath" placeholder into a collapsible GE-summary box, shown on every
+  matched MyUCSC page via the same `computeGESlots` call the tracker page
+  uses. Lives at `position: fixed; bottom: 16px; right: 16px` —
+  specifically *bottom*-right, not top-right: `SchedulePanel` already claims
+  `top: 16px; right: 16px` on `my.ucsc.edu`, and two `position: fixed`
+  elements at the same corner silently stack (the later-mounted, larger one
+  wins and fully hides the other) — this was a real bug on `main` before
+  this merge, now avoided by giving each a distinct corner.
+- **The standalone tracker page** (`ge-tracker/GETrackerPage.tsx`) — a full
+  extension page (own `index.html`/`index.tsx`, no shadow DOM needed),
+  opened via `chrome.action.onClicked` → `chrome.tabs.create()`
+  (`background/index.ts`), not `action.default_popup`. **Why a tab instead
+  of a popup dropdown:** the tracker needs real page real estate (a full
+  progress list plus a multi-row assignment picker) that a small popup
+  can't comfortably hold — `manifest.config.ts` explicitly sets `action: {}`
+  with no `default_popup` for this reason, and no icon assets exist yet
+  either (noted inline as a later polish item).
+  - **Build gotcha hit shipping this page**: `@crxjs/vite-plugin` only
+    auto-discovers HTML referenced by specific manifest keys
+    (`options_page`, `action.default_popup`, `devtools_page`, `sandbox.pages`,
+    `side_panel.default_path`, `chrome_url_overrides`) — a page opened only
+    via `chrome.tabs.create` isn't one of those, so the build silently
+    produced no `dist/src/ge-tracker/index.html` at all until an explicit
+    `build.rollupOptions.input` entry was added to `vite.config.ts`
+    (`vite.config.ts`'s own comment flags this for the next page like it).
+    Verify any future `chrome.tabs.create`-opened page actually lands in
+    `dist/` after a build — the manifest alone won't tell you it's missing.
+
+**Importing real data: the MyUCSC Degree Progress Report**
+(`adapters/degreeProgress.ts` + `content/degreeProgressImport.ts`) — there's
+still no manual "mark course taken" UI (see §9), so this is currently the
+only way taken-course data enters the system automatically. Two load-bearing
+facts about the source page shaped this adapter:
+- **It's genuine classic PeopleSoft** (`win0div*`, `ACE_*`,
+  `submitAction_win0(...)` postback links) — unlike MyUCSC class search,
+  which turned out to be a custom non-PeopleSoft Bootstrap page on
+  `pisa.ucsc.edu` (§4.2). The lesson generalized: don't assume every MyUCSC
+  page shares one rendering approach — check the real URL and markup
+  per page, which is exactly why this needed its own adapter file rather
+  than extending `myucsc.ts`.
+- **A PeopleSoft collapsible section's course-level detail doesn't exist in
+  the DOM until a user has actually expanded it** — a real server
+  round-trip (`submitAction_win0`), not a CSS toggle. Rather than script 11
+  sequential expand-and-wait postbacks, `parseDegreeProgressGE` just reads
+  whatever's currently in the DOM: an expanded category yields real
+  per-course credit (written to `db.takenCourses`, only for a course whose
+  status icon reads exactly `"Taken"` — the only status ever captured; no
+  model exists for a DPR-sourced "planned" course either, since this
+  extension's "planned" specifically means "in a Plan's sections", which
+  needs a MyUCSC section DPR doesn't expose); a still-collapsed category
+  just marks its GE code satisfied with no specific course attached, fed
+  into `computeGESlots` via the additive `Settings.degreeProgressGECodes` /
+  `degreeProgressImportedAt` fields.
+- **DC is skipped by this importer too**, for the same reason it's unsourced
+  in the dataset: its row has no satisfied icon at all, because the page's
+  own text says DC is reported per-major in a different section ("Upper-
+  Division Requirements") this adapter doesn't touch.
+- No manifest change was needed for the importer — the DPR's real URL
+  confirmed it renders under `my.ucsc.edu` itself (already a matched host),
+  unlike class search which needed `pisa.ucsc.edu` added specifically.
+
+### 4.8 Options page (`src/options/`)
 
 A plain extension page (not a content script), so it renders with no shadow
 DOM and no content-script constraints — it's `createRoot` straight into
-`#root` the same as any ordinary Vite+React app. Today it's a single major
-picker backed by a hardcoded three-item list and `useSettings()`; it's
-explicitly marked as a placeholder pending a catalog-driven major list.
+`#root` the same as any ordinary Vite+React app. A major picker (hardcoded
+three-item list) and a catalog-year picker (hardcoded one-item list, since
+only one catalog snapshot is bundled) both write straight to `useSettings()`.
+Both lists are explicitly marked as placeholders — the major list pending a
+catalog-driven list, the year list pending a second bundled catalog year to
+actually choose between.
 
-### 4.8 Background service worker (`src/background/index.ts`)
+### 4.9 Background service worker (`src/background/index.ts`)
 
-Intentionally minimal: load/`onInstalled`/`onStartup` console logging only,
-no `chrome.alarms`, no message routing. The comment in the file is explicit
-about why: `setInterval` would silently stop the moment the MV3 service
-worker suspends (~30s idle), and the correct periodic primitive
-(`chrome.alarms`) needs a permission not in the v1 permission list — so
-rather than ship a background task that silently stops working, there isn't
-one yet.
+Mostly intentionally minimal: load/`onInstalled`/`onStartup` console logging
+only, no `chrome.alarms`. The comment in the file is explicit about why:
+`setInterval` would silently stop the moment the MV3 service worker
+suspends (~30s idle), and the correct periodic primitive (`chrome.alarms`)
+needs a permission not in the v1 permission list — so rather than ship a
+background task that silently stops working, there isn't one yet. The one
+real responsibility it has is routing the toolbar icon click to
+`chrome.tabs.create()` for the GE tracker page (§4.7) — the simplest
+possible "open a page" handler, not a message-routing layer.
 
 ## 5. Build & tooling
 
@@ -505,6 +618,8 @@ one yet.
 | `DecompressionStream('gzip')` native API | Chrome-only extension; native API has existed since Chrome M80 | A userland gzip JS library |
 | Fixed-delay retry in the catalog scraper, not exponential backoff | Manual, infrequent, single-operator script — simplicity over robustness it doesn't need | Exponential backoff + jitter |
 | One `content_scripts` manifest entry with `all_frames: true`, host/frame branching in code | `@crxjs/vite-plugin`'s per-filename `web_accessible_resources` tracking breaks with two entries on the same file | Two manifest entries, one per host |
+| One pure `geProgress.ts` computing GE progress, shared by 3 UI surfaces (row badges, persistent widget, tracker page) | All three must agree on "is this GE satisfied" — computing it once and feeding all three removes any chance of surfaces silently disagreeing | A separate progress computation per surface |
+| GE tracker page opened via toolbar `action` + `chrome.tabs.create`, not `action.default_popup` | The tracker needs real page real estate (a full progress list plus a multi-row assignment picker) a small popup dropdown can't comfortably hold | `default_popup` |
 
 ## 8. Settled history: things tried and deliberately removed
 
@@ -546,10 +661,16 @@ there a graph view":
 The spec document is the original plan; it is **not** kept in sync with
 implementation and shouldn't be read as current state. As of this writing:
 
-- **Not implemented yet:** GE requirement tracker (inline badges, standalone
-  tracker page, double-dip detection), Google Calendar export, `.ics` export,
-  "mark course taken" UI, catalog-driven major list (the options page major
-  picker is a hardcoded 3-item placeholder).
+- **Not implemented yet:** Google Calendar export, `.ics` export, a *manual*
+  "mark course taken" UI (taken courses currently only enter the system via
+  the Degree Progress Report importer, §4.7), catalog-driven major list (the
+  options page major picker is a hardcoded 3-item placeholder), catalog-page
+  GE badges (deferred — would need a new `catalog.ucsc.edu` adapter built
+  from scratch, since that adapter was deleted along with the prereq graph,
+  §8), and per-major DC course data (`DC_COURSES_BY_MAJOR` ships empty, §4.7).
+- **Partially implemented:** the catalog-year picker (§4.8) exists but is a
+  one-item placeholder, since only one catalog snapshot (2026-2027) is
+  bundled — there's nothing real to pick between yet.
 - **Built, then removed:** the React Flow + `dagre` prerequisite graph (see
   §8) — the spec still describes it as a planned v1 feature; it was replaced
   by the narrower prereq popover.
@@ -565,20 +686,20 @@ implementation and shouldn't be read as current state. As of this writing:
 
 ## 10. Open/known issues as of this writing
 
-- **`Panel` and `SchedulePanel` both mount at `position: fixed; top: 16px;
-  right: 16px`** on `my.ucsc.edu`'s top frame (`Panel.tsx`'s inline style vs.
-  the `scheduleHost.style.cssText` set in `content/index.tsx`). The
-  later-mounted, larger `SchedulePanel` will sit on top of and fully
-  obscure the small `Panel` ("Hello SlugPath" stub). This is a real,
-  reproducible layout bug on `main` today, not a hypothetical — worth fixing
-  by moving one of the two to a different screen corner, or merging them
-  into a single mount point, whichever lands first.
 - **`linkedSectionKeys` has no production source** (§4.2) — cross-listed/
   lecture+lab grouping degrades to "treat every section independently"
   until a real DOM signal for it is found and wired into
   `parseSearchResults`.
 - **`getCurrentTerm` is unverified against the live site** — don't trust it
   without re-checking against a real captured page first.
+- **MyUCSC row GE badges (`geBadgeInjection.ts`, §4.7) have only JSDOM-level
+  verification** — unlike the Degree Progress Report importer and the
+  `Panel` widget, which were confirmed against the live site, there's no
+  UCSC login available in an automated session to check this one live.
+
+*(Resolved since the last pass: `Panel` and `SchedulePanel` used to both
+mount at the same fixed screen corner on `my.ucsc.edu` and silently stack —
+fixed by moving `Panel` to `bottom-right`, see §4.7.)*
 
 ## 11. Quick command reference
 

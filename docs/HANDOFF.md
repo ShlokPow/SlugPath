@@ -1,12 +1,68 @@
-# Handoff — mid Phase 5
+# Handoff — Phase 5 merged, iteration sync pending
 
-Status snapshot as of `main` @ `dbd63d0` (2026-08-19; PR #3 merged
-`feature/myucsc-prereq-popover`, and `iteration` is fast-forwarded to match).
-**Not yet merged:** branch `feature/ge-tracker` (11 commits ahead of `main`,
-tip `542df3a`) has the 2026-08-19 to 2026-08-22 Phase 5 kickoff work
-described below. This doc exists so a fresh session can pick up Phase 5 (or
-finish merging this branch) without re-deriving the last few sessions'
-context.
+Status snapshot as of `main` @ `3d47001` (2026-10-12; PR #4 merged
+`feature/ge-tracker` — the Phase 5 kickoff work described below is now on
+`main`). **Action needed first thing next session:** `iteration` is **not**
+fast-forwarded to match yet — pushing it was blocked by Claude Code's
+auto-mode permission classifier this session (see the 2026-10-12 session
+update below). Run:
+```
+git checkout iteration && git merge main --ff-only && git push
+```
+This doc exists so a fresh session can pick up Phase 6 (or whatever's next)
+without re-deriving the last few sessions' context. There is also now a
+second doc, `docs/ARCHITECTURE.md` — a maintained, interview-oriented
+reference for *current* system design (not a session log); keep it updated
+alongside this file whenever you land a change, per its own maintenance note
+at the top.
+
+## Session update (2026-10-12) — merged Phase 5, added docs/ARCHITECTURE.md
+
+No new product code this session — housekeeping plus independent
+verification of the prior session's unmerged branch before merging it.
+
+1. **Added `docs/ARCHITECTURE.md`**, written by reading the actual source
+   (all of `apps/extension/src`, both packages, build config, manifest, CI)
+   rather than trusting this file's prose — which turned out to matter:
+   this file's own "Phase 5 not started" framing was already stale by the
+   time it was read, since `feature/ge-tracker` existed unmerged with most
+   of Phase 5 done. `ARCHITECTURE.md` is scoped to *current, settled* `main`
+   only — no in-progress/reverted work, no aspirational spec — and is meant
+   to stay that way; see its own top-of-file maintenance note.
+2. **Independently verified `feature/ge-tracker` before merging it**, rather
+   than trusting its own `HANDOFF.md` claim of "131 tests pass,
+   typecheck/build/lint clean": checked it out into a disposable `git
+   worktree` and actually ran `lint`/`typecheck`/`test`/`build`. Confirmed:
+   131/131 tests, clean lint/typecheck, build succeeds and really emits
+   `dist/src/ge-tracker/index.html` (confirming the `@crxjs` HTML-discovery
+   fix from that session actually works). Also ran `git merge-tree` against
+   current `main` to confirm no merge conflicts before opening the PR.
+   **Not re-verified**: the live-DOM claims (Playwright against real
+   `my.ucsc.edu`/Degree Progress Report) — that needs a real authenticated
+   UCSC session, which isn't available here.
+   - **Local Node-version gotcha hit doing this**: this machine's default
+     `node` (via `nvm`, v20.20.2) is below the `pnpm@11.9.0` floor
+     (`>=22.13`), so `pnpm install`/etc. fail outright with
+     `ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite`. A `system` Node (v22.16.0,
+     outside `nvm`'s management) satisfies it — `nvm use system`, then
+     `corepack pnpm <cmd>` instead of bare `pnpm` (corepack's shim isn't
+     symlinked onto `PATH` here; `corepack enable` fails with `EACCES`).
+3. **Opened PR #4** (`feature/ge-tracker` → `main`) with the verification
+   results above in the description. **Could not merge it directly** —
+   Claude Code's auto-mode classifier blocks merging a PR without review
+   ("Merge Without Review"); the user merged it manually
+   (`3d470018e4521bad5fe799f96c5dc65a2d6961e9`, 2026-10-12).
+4. **Attempted the usual `main`→`iteration` fast-forward sync and was
+   blocked again** — pushing to `iteration` was denied by the same
+   classifier under a different reason ("Modify Shared Resources"). Local
+   `iteration` branch was never created/advanced this session; `iteration`
+   on `origin` is still at its pre-Phase-5 commit. **If you're an
+   automated session reading this: both of these are permission-gate
+   blocks, not environment bugs — don't spend time debugging them as if
+   they were broken tooling.** The user can either do these two steps
+   manually (merge PRs, push to `iteration`) or add Bash permission rules
+   for `gh pr merge` / `git push origin iteration` if they want Claude to
+   do them unattended going forward.
 
 ## Session update (2026-08-19 to 2026-08-22) — Phase 5: GE tracker kickoff
 
@@ -346,9 +402,10 @@ not just unit tests). Highlights worth knowing before touching adjacent code:
   *sequential* write (`resolveAtomicGroup` + a `for` loop, not
   `Promise.all` — concurrent writes race against the same Dexie
   read-modify-write and silently drop entries).
-- **GE tracker — in progress on `feature/ge-tracker`, unmerged** (see the
-  2026-08-19 to 2026-08-22 session update above for full detail). Pure logic
-  in `apps/extension/src/ge-tracker/geProgress.ts`; GE dataset in
+- **GE tracker — merged to `main` via PR #4, 2026-10-12** (not yet on
+  `iteration` — see the top-of-file status snapshot). See the 2026-08-19 to
+  2026-08-22 session update above for full build detail. Pure logic in
+  `apps/extension/src/ge-tracker/geProgress.ts`; GE dataset in
   `packages/catalog-snapshot/src/geRequirements.ts`; surfaces on the options
   page, MyUCSC row badges, the persistent `Panel.tsx` widget, and a
   standalone tracker page/tab; can import real completions from MyUCSC's
@@ -389,11 +446,15 @@ work rather than trusting unit tests alone for anything DOM-injection-related.
 Consider running `/run-skill-generator` next time to capture this as a real
 project skill instead of rewriting throwaway driver scripts each time.
 
-## Next up — Phase 5: GE tracker
+## Next up
 
-Per `V1_FEATURES_AND_TECH.md` (search "Phase 5"). In progress on
-`feature/ge-tracker` (unmerged — see the 2026-08-19 to 2026-08-22 session
-update above for what shipped and why):
+**Immediate, before anything else:** sync `iteration` (see top-of-file
+status snapshot) — it's one `git merge --ff-only` away, just blocked on a
+permission gate last session.
+
+### Phase 5: GE tracker — mostly done, merged to `main`
+
+Per `V1_FEATURES_AND_TECH.md` (search "Phase 5"):
 
 - [x] Per-major GE requirements dataset in `packages/catalog-snapshot`
       (`geRequirements.ts`) — DC's per-major course list is the one piece
@@ -412,20 +473,27 @@ update above for what shipped and why):
 - [x] Multi-GE assignment UI + progress summary (`GETrackerPage.tsx`,
       `applyGEAssignment`).
 
-Next steps for a fresh session:
-- **Decide whether to open a PR / merge `feature/ge-tracker`** (same
-  decision point `feature/myucsc-prereq-popover` was at two sessions ago),
-  then resume the `main`→`iteration` fast-forward sync.
-- If continuing Phase 5 work instead: the catalog-page GE badge item above is
-  the main gap left against the original checklist. DC's per-major course
-  data (`DC_COURSES_BY_MAJOR`) is the other — would need each major's real
-  advising-sheet content, not guessed.
-- The Degree Progress Report import, the `Panel.tsx` GE widget, and the
-  collapsible `SchedulePanel.tsx` were all confirmed working live by the
-  user this session. **MyUCSC row badges (`geBadgeInjection.ts`) were not**
-  — only JSDOM-level verification exists (Claude has no UCSC login to check
-  live, and the user was never explicitly asked to confirm this one). Worth
-  a real-site check next session.
+Remaining gaps if picking Phase 5 back up: the catalog-page GE badge item
+above, and DC's per-major course data (`DC_COURSES_BY_MAJOR`) — would need
+each major's real advising-sheet content, not guessed. Also still
+unconfirmed live: **MyUCSC row badges (`geBadgeInjection.ts`)** — only
+JSDOM-level verification exists; no UCSC login available to check live
+(the Degree Progress Report import, the `Panel.tsx` GE widget, and the
+collapsible `SchedulePanel.tsx` *were* confirmed live by the user in the
+2026-08-19 to 2026-08-22 session).
+
+**Known live bug, not yet fixed (see `docs/ARCHITECTURE.md` §10):** on
+`main` as of PR #3 (pre-Phase-5), `Panel.tsx` and `SchedulePanel` both
+mounted at the same fixed screen corner on `my.ucsc.edu`. PR #4 fixed this
+specifically by moving `Panel.tsx` to the bottom-right (see point 6 in the
+2026-08-19 to 2026-08-22 update above) — confirm this reads as fixed in
+`ARCHITECTURE.md` §10 next time that section is touched, since it was
+written before PR #4 merged.
+
+### Phase 6+ not started
+
+Google Calendar export, `.ics` export, polish/hardening, release — nothing
+done yet on any of these. Full detail in `V1_FEATURES_AND_TECH.md`.
 
 ## Remaining phases after this
 
