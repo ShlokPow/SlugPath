@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import { usePlans, useSettings } from '../storage/hooks'
 import { createPlan, deletePlan, duplicatePlan, removeSectionFromPlan, renamePlan } from '../storage/planStore'
 import type { Plan, Section } from '../storage/types'
@@ -13,6 +13,7 @@ const GRID_HEIGHT = (GRID_END_MINUTE - GRID_START_MINUTE) * PIXELS_PER_MINUTE
 export function SchedulePanel() {
   const [settings, setSettings] = useSettings()
   const plans = usePlans()
+  const [collapsed, setCollapsed] = useState(false)
 
   const activePlan = useMemo(() => plans?.find((p) => p.id === settings.activePlanId), [plans, settings.activePlanId])
 
@@ -47,18 +48,31 @@ export function SchedulePanel() {
   }
 
   return (
-    <div style={panelStyle}>
-      <PlanSwitcher
-        plans={plans ?? []}
-        activePlanId={settings.activePlanId}
-        onSwitch={(id) => setSettings({ activePlanId: id })}
-        onCreate={handleCreatePlan}
-        onRename={handleRename}
-        onDuplicate={handleDuplicate}
-        onDelete={handleDelete}
-        hasActivePlan={Boolean(activePlan)}
-      />
-      {activePlan ? <ActivePlanView plan={activePlan} /> : <EmptyState onCreate={handleCreatePlan} />}
+    <div style={{ ...panelStyle, height: collapsed ? 'auto' : panelStyle.height }}>
+      <button
+        type="button"
+        onClick={() => setCollapsed((c) => !c)}
+        style={headerBarStyle}
+        aria-expanded={!collapsed}
+      >
+        <span>{activePlan ? activePlan.name : 'SlugPath Schedule'}</span>
+        <span>{collapsed ? '▸' : '▾'}</span>
+      </button>
+      {!collapsed && (
+        <>
+          <PlanSwitcher
+            plans={plans ?? []}
+            activePlanId={settings.activePlanId}
+            onSwitch={(id) => setSettings({ activePlanId: id })}
+            onCreate={handleCreatePlan}
+            onRename={handleRename}
+            onDuplicate={handleDuplicate}
+            onDelete={handleDelete}
+            hasActivePlan={Boolean(activePlan)}
+          />
+          {activePlan ? <ActivePlanView plan={activePlan} /> : <EmptyState onCreate={handleCreatePlan} />}
+        </>
+      )}
     </div>
   )
 }
@@ -249,6 +263,22 @@ const panelStyle: CSSProperties = {
   fontFamily: 'system-ui, sans-serif',
   display: 'flex',
   flexDirection: 'column',
+  overflow: 'hidden',
+}
+
+const headerBarStyle: CSSProperties = {
+  width: '100%',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '8px 12px',
+  border: 'none',
+  borderRadius: '8px 8px 0 0',
+  background: '#003c6c',
+  color: '#fff',
+  cursor: 'pointer',
+  fontSize: 13,
+  fontWeight: 600,
 }
 
 const buttonStyle: CSSProperties = {

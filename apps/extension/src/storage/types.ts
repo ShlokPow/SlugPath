@@ -48,4 +48,12 @@ export interface Settings {
   calendarLinked: boolean
   defaultTerm: string | null
   activePlanId: string | null
+  // courseCode -> GE code, from the GE tracker's "pick a primary GE" picker
+  // for courses that double-dip toward 2+ GEs. See docs/migrations.md.
+  geAssignments: Record<string, string> | null
+  // GE codes the MyUCSC Degree Progress Report reported satisfied on last
+  // import (adapters/degreeProgress.ts), for any category that was
+  // collapsed at import time and so has no specific course to credit.
+  degreeProgressGECodes: string[] | null
+  degreeProgressImportedAt: number | null
 }
