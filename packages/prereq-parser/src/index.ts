@@ -1,2 +1,2 @@
-export * from './types'
-export { parsePrereq } from './parser'
+export * from './types.ts'
+export { parsePrereq } from './parser.ts'

@@ -1,5 +1,5 @@
-import { tokenize, type Token } from './tokenizer'
-import type { ParsePrereqResult, PrereqNode } from './types'
+import { tokenize, type Token } from './tokenizer.ts'
+import type { ParsePrereqResult, PrereqNode } from './types.ts'
 
 // A course-logic clause is often preceded by narrative ("Students who have already
 // taken X should not take this course.") and/or a label. We anchor on the first

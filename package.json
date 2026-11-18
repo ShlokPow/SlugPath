@@ -7,6 +7,7 @@
     "dev": "pnpm --filter @slugpath/extension dev",
     "build": "pnpm --filter @slugpath/extension build",
     "build:catalog": "node scripts/build-catalog-snapshot.ts",
+    "coverage:prereq": "node --experimental-strip-types scripts/prereq-coverage.ts",
     "lint": "eslint .",
     "typecheck": "pnpm -r run typecheck && tsc --noEmit -p scripts/tsconfig.json",
     "test": "vitest run"
