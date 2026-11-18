@@ -245,35 +245,35 @@ Owner key: **O** = Opus, **K** = Haiku worker, **H** = human.
 - [x] **Wave 0 integration gate (O).** Full check suite green on `release/v1-prep`.
 
 ### Wave 1 — parallel, disjoint files
-- [ ] **T1.1 (K) Narrow host permissions.** *Files:* `apps/extension/manifest.config.ts`.
+- [x] **T1.1 (K) Narrow host permissions.** *Files:* `apps/extension/manifest.config.ts`.
   Set `host_permissions` to `['https://www.googleapis.com/calendar/*']`. Leave `content_scripts`
   untouched (single entry is load-bearing; see the comment there). *Verify:* build, then
   `dist/manifest.json` shows the one host. *Follow-up:* H3 live check that row buttons still inject.
-- [ ] **T1.2 (K) Typed day codes.** *Files:* `apps/extension/src/storage/types.ts`,
+- [x] **T1.2 (K) Typed day codes.** *Files:* `apps/extension/src/storage/types.ts`,
   `adapters/myucsc.ts`, `schedule/SchedulePanel.tsx`, `schedule/conflicts.test.ts`, plus any file
   `tsc` then flags (report them). Add `export type Day` as the union of exactly the codes
   `parseDays` emits; type `MeetingPattern.days: Day[]`; replace `'Mon'`-style codes in tests with
   real ones. *Do not* change stored data or add a migration (same strings). *Verify:* tsc + the
   touched test files.
-- [ ] **T1.3 (K) Remove placeholder pickers.** *Files:* `apps/extension/src/options/Options.tsx`.
+- [x] **T1.3 (K) Remove placeholder pickers.** *Files:* `apps/extension/src/options/Options.tsx`.
   Delete `MAJORS` and the major `<select>`; replace the catalog-year `<select>` with text showing
   the bundled catalog version. Keep `Settings` fields. If `GETrackerPage.tsx` reads `majorCode`
   for anything user-visible, report it instead of editing.
-- [ ] **T1.4 (K) Release workflow.** *Files:* `.github/workflows/release.yml`. Add a step failing
+- [x] **T1.4 (K) Release workflow.** *Files:* `.github/workflows/release.yml`. Add a step failing
   the job when `github.ref_name` ≠ `v` + `apps/extension/package.json` version; replace
   `upload-artifact` with `gh release create "$TAG" <zip> --generate-notes` (`permissions:
   contents: write`, `GH_TOKEN: ${{ github.token }}`). *Verify:* YAML parses; Opus reviews by reading.
-- [ ] **T1.5 (K) Parser coverage report.** *Files:* new `scripts/prereq-coverage.ts`, root
+- [x] **T1.5 (K) Parser coverage report.** *Files:* new `scripts/prereq-coverage.ts`, root
   `package.json` (add script `coverage:prereq`). Load the bundled snapshot through
   `@slugpath/catalog-snapshot`, run `parsePrereq` on every non-empty `prereqRaw`, print
   parsed/total/percent and the 30 most common failing strings normalised by replacing course
   codes with `X` and numbers with `N`. No test needed; it is a report. *Verify:* runs and prints.
-- [ ] **T1.6 (K) Reconcile docs.** *Files:* `SlugPath.md`, `docs/ARCHITECTURE.md` §9 only.
+- [x] **T1.6 (K) Reconcile docs.** *Files:* `SlugPath.md`, `docs/ARCHITECTURE.md` §9 only.
   Rewrite `SlugPath.md` sections that contradict §2 of this file (graph, catalog pages, Dexie,
   on-demand fetch, `getAuthToken`, PNG export, permissions list, KPIs) to match §2 and §9.
   Replace ARCHITECTURE §9 with a pointer to §2 here plus any divergence still true.
   *Doc claim check applies.*
-- [ ] **T1.7 (K) Store listing draft.** *Files:* new `docs/store-listing.md`. Short description
+- [x] **T1.7 (K) Store listing draft.** *Files:* new `docs/store-listing.md`. Short description
   (≤132 chars), long description, single-purpose statement, one justification paragraph each for
   `storage`, `identity`, the Calendar host permission and the two content-script hosts, and the
   data-usage answers. Every claim must match `docs/privacy-policy.md`; report any mismatch

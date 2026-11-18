@@ -14,6 +14,32 @@ file whenever you land a change, per its own maintenance note at the top.
 Everything since `163f29c` was committed as `2525512` and pushed to `main`.
 v1 work now follows `V1_FEATURES_AND_TECH.md` on `release/v1-prep`.
 
+## Session update (2026-11-18) — v1 plan Waves 0 and 1
+
+Orchestrated per `V1_FEATURES_AND_TECH.md` §5 (Haiku workers, Gates A–C).
+T0.1 finished (bug write-up deleted, `release/v1-prep` cut). Wave 1: host
+permission narrowed to the Calendar API, `Day` union type, options pickers
+removed, release workflow publishes to a GitHub Release with a tag check,
+`coverage:prereq` report (baseline 1675/3381, 49.5%), `SlugPath.md` and
+ARCHITECTURE §9 reconciled, `docs/store-listing.md` drafted and the privacy
+policy corrected from its mismatch list.
+
+### Gotchas hit this session (don't rediscover these)
+
+- **`node scripts/*.ts` needs `--experimental-strip-types` on this
+  machine's Node 22.16** (default-on only from 22.18/23.6), and Node never
+  resolves extensionless relative imports or `@slugpath/*` from the repo
+  root. That's why `prereq-parser` imports now carry `.ts` and the coverage
+  script reads the snapshot gz by relative path.
+- **The top coverage failure is not a prerequisite**: "Enrollment is
+  restricted to graduate students." (706 courses). Skip enrollment
+  restrictions when picking T2.2 batches.
+- **Doc tasks fail review on overclaims, not omissions.** Both doc workers
+  failed Gate B twice on claims like "no runtime fetch" (the bundled
+  snapshot is fetched via `chrome.runtime.getURL`), "only host contacted"
+  (sign-in opens accounts.google.com) and "only reads the Degree Progress
+  Report on click" (it scans for the GE heading first).
+
 ## Session update (2026-10-18 to 2026-10-23) — live-testing fixes
 
 All from the user's hands-on testing of the built extension on real MyUCSC.

@@ -134,6 +134,8 @@ Everything persisted lives in **`chrome.storage.local`**:
   `clear`) so call sites stay one-liners.
 - `settingsStore.ts` — the single small settings blob (`majorCode`,
   `catalogYear`, `calendarLinked`, `defaultTerm`, `activePlanId`, ...).
+  `majorCode` and `catalogYear` stay in the type, but no UI writes them since
+  the options-page pickers were removed.
 
 **Why not IndexedDB:** a content script's IndexedDB belongs to the *host
 page's* origin, not the extension's. SlugPath's content script runs in the
@@ -240,7 +242,9 @@ guessing at a mechanism.
 
 ### 4.3 Schedule builder (`src/schedule/`, `src/storage/planStore.ts`)
 
-**Day codes** are the adapter's (`myucsc.ts`): `M`, `T`, `W`, `Th`, `F`.
+**Day codes** are the adapter's (`myucsc.ts`): `M`, `T`, `W`, `Th`, `F`
+(plus `Sa`/`Su`), typed as the `Day` union in `storage/types.ts`, so a
+`'Mon'`-style code is a compile error rather than a silently empty grid.
 Everything downstream (conflicts, the panel's weekly grid, calendar export)
 compares against those codes. The grid's `DAYS` pairs each code with its
 column label ("Tue" ↔ `T`), so a label is never used as a code.
@@ -638,11 +642,10 @@ A plain extension page (not a content script), so it renders with no shadow
 DOM and no content-script constraints — it's `createRoot` straight into
 `#root` the same as any ordinary Vite+React app. Three sections:
 
-- **Degree**: a major picker (hardcoded three-item list) and a catalog-year
-  picker (hardcoded one-item list, since only one catalog snapshot is
-  bundled), both writing straight to `useSettings()`. Both lists are
-  explicitly marked as placeholders — the major list pending a catalog-driven
-  list, the year list pending a second bundled catalog year to choose between.
+- **Catalog**: the bundled catalog year as plain text, read from
+  `@slugpath/catalog-snapshot/data/version.json`. No major picker (UCSC GEs
+  are campus-wide; only DC is per-major, and that data isn't sourced) and no
+  year picker (only one catalog is bundled).
 - **Google Calendar**: link status plus link/unlink buttons, which go through
   the background worker's messages (§4.8) rather than calling
   `chrome.identity` here, even though an extension page could — one owner of
@@ -746,9 +749,11 @@ Nothing elaborate, but two rules hold across every surface:
   each context's actual global scope is what gets linted against.
 - **CI** (`.github/workflows/ci.yml`): lint → typecheck → test on every PR
   and on push to `main`. No build/package step in CI.
-- **Release** (`.github/workflows/release.yml`): on a `v*` tag, builds and
-  zips `apps/extension/dist` as a release artifact — no Chrome Web Store
-  publish automation yet, just the artifact. The build step passes
+- **Release** (`.github/workflows/release.yml`): on a `v*` tag, fails unless
+  the tag is `v` + `apps/extension/package.json`'s version, then builds, zips
+  `apps/extension/dist` and attaches the zip to a GitHub Release
+  (`gh release create --generate-notes`), which doesn't expire the way a
+  workflow artifact does. No Chrome Web Store publish automation. The build step passes
   `SLUGPATH_OAUTH_CLIENT_ID` (a repo secret) through to the manifest (§4.8);
   without it the zip still builds, with calendar export non-functional.
 
@@ -908,6 +913,7 @@ pnpm build:catalog   # re-scrape catalog.ucsc.edu, regenerate the bundled snapsh
 pnpm lint            # eslint .
 pnpm typecheck       # per-package tsc --noEmit + scripts/tsconfig.json
 pnpm test            # vitest run, whole workspace
+pnpm coverage:prereq # parse rate of every bundled prereqRaw + top 30 failure patterns
 ```
 
 Loading the built extension: `chrome://extensions` → Developer mode → Load
