@@ -278,7 +278,7 @@ Owner key: **O** = Opus, **K** = Haiku worker, **H** = human.
   `storage`, `identity`, the Calendar host permission and the two content-script hosts, and the
   data-usage answers. Every claim must match `docs/privacy-policy.md`; report any mismatch
   between the policy and the code (list fixes; Opus applies them). *Doc claim check applies.*
-- [ ] **Wave 1 integration gate (O).** Full check suite green on the combined branch before the PR.
+- [x] **Wave 1 integration gate (O).** Full check suite green on the combined branch before the PR.
 
 ### Wave 2 — serial
 - [ ] **T2.1 (K) Hide Google controls without a real client id.** *Depends:* T1.3. *Files:*
