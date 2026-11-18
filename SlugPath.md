@@ -1,9 +1,11 @@
 # SlugPath Product Spec (Draft)
 
+Scope source of truth: `V1_FEATURES_AND_TECH.md` §2 and §9. Where this document and that file disagree, that file wins.
+
 ## Product goal
-Help UCSC undergraduates plan quarterly schedules and multi-year degree paths by augmenting MyUCSC and the UCSC catalog with:
+Help UCSC undergraduates plan quarterly schedules by augmenting MyUCSC class search with:
 - an in-page schedule builder with conflict detection,
-- a navigable prerequisite graph on every course page, and
+- a prerequisite popover on each class-search result row, and
 - a GE requirement tracker that flags coverage and double-dipping.
 
 ## Primary user
@@ -11,18 +13,19 @@ UCSC undergraduate students planning schedules and degree progress.
 
 ## Core user promises
 - **Live schedule builder**: Build a weekly schedule from MyUCSC's class search without leaving the page; conflicts surface as sections are added.
-- **Visual prerequisites**: See what a course requires and unlocks as a clickable graph on the course page.
-- **GE coverage at a glance**: See which GEs each course satisfies inline, with running progress against the declared major.
+- **Prerequisites at a glance**: Open a row's prerequisites to see its direct requirements as AND/OR chips, with courses already taken or planned marked. Unparseable requirements show as raw text.
+- **GE coverage at a glance**: See which GEs each class-search result satisfies inline, and track GE progress in a tracker tab.
 
 ## Personas and access model
 
 ### Identity
-- **No accounts, no server.** All state is per-browser-profile and persists in local storage.
-- **Google Calendar linkage**: opt-in per user; OAuth token acquired via `chrome.identity`; only used to write exported schedules.
+- **No accounts, no server.** All state is per-browser-profile. Plans, taken courses and settings persist in `chrome.storage.local`; the Google token (if linked) is held in `chrome.storage.session`.
+- **Google Calendar linkage**: opt-in per user; OAuth token acquired via `chrome.identity.launchWebAuthFlow`; only used to write exported schedules.
 
 ### Scope
-- Extension is scoped to `*.ucsc.edu` (MyUCSC pages, catalog pages) plus internal extension pages (options, GE tracker tab).
-- No cross-user data. No off-device telemetry.
+- Content scripts run only on `https://my.ucsc.edu/*` and `https://pisa.ucsc.edu/*` (MyUCSC class search and its results frame). Nothing runs on `catalog.ucsc.edu`.
+- Extension pages: options page and the GE tracker tab.
+- No cross-user data. No telemetry.
 
 ## Key product experiences
 
@@ -30,42 +33,42 @@ UCSC undergraduate students planning schedules and degree progress.
 A side panel injected into MyUCSC class search that answers: "What does my week look like if I add this section?"
 
 #### Sections
-- **Picked-sections list**: user's chosen sections for the current planning term, grouped by course.
-- **Weekly calendar**: Mon–Fri time grid (7am–10pm default), each section rendered as a block. Conflicts flagged in red with a hover tooltip identifying the clashing sections.
+- **Picked-sections list**: user's chosen sections for the current plan, grouped by course. Sections in conflict are highlighted.
+- **Weekly calendar**: Mon–Fri time grid (7am–10pm), each section rendered as a block. Conflicting sections are flagged.
 - **Actions**:
   - Add from MyUCSC search results (button injected next to each result row).
-  - Remove, swap section, mark tentative.
-  - Export to Google Calendar (creates a recurring event series per meeting pattern, bounded by the term).
-  - Save multiple named plans (e.g. "Winter 2027 — plan A" vs "plan B"); switch between them.
+  - Remove a section from a plan.
+  - Export as `.ics` (primary). Export to Google Calendar only if Decision D2 clears (see Exports).
+  - Save multiple named plans (e.g. "Winter 2027 — plan A" vs "plan B"); create, rename, duplicate, delete, and switch between them.
 
-### 2) Prerequisite chain visualizer
-A collapsible graph injected onto every catalog course page that answers: "What led up to this course, and what does it open up?"
+### 2) Prerequisite popover
+A per-row popover on MyUCSC class search, opened from a control next to each result's "Add to plan" button. It answers: "What does this course require?"
 
 #### Behavior
-- Nodes are courses; edges are prerequisite relations; AND/OR gates render for compound prereqs.
-- Two direction toggles: **Requires** (upstream) and **Unlocks** (downstream). Default: 2 levels each way.
-- Each node shows course code, title, GE badges, and terms typically offered (if known).
-- Click a node → navigate to that course's catalog page (which the extension re-decorates on load).
-- Highlight courses already added to any saved plan; distinguish "planned" vs "taken" (courses the user has marked complete in the GE tracker).
+- Shows the course's direct prerequisites as AND/OR chips.
+- Courses the user has marked taken, and courses in a plan, are coloured differently.
+- If a prerequisite string does not parse, the popover shows the raw text instead of dropping the requirement.
+- Parser coverage is partial; the coverage figure is tracked by the `coverage:prereq` report (plan T1.5), not by this spec.
 
 ### 3) GE requirement tracker
 Two surfaces answer: "Which GEs am I missing, and does this course help?"
 
 #### Inline overlay
-- On every catalog course page and MyUCSC search result, show a compact list of GE codes the course satisfies.
-- If adding a course would double-dip against a GE already covered by a planned or completed course, badge it as "already covered" so users can spot redundancy or intentional double-dips.
+- On every MyUCSC search result, show a compact list of GE codes the course satisfies.
+- If a course would double-dip against a GE already covered by a planned or taken course, badge it as "already covered" so users can spot redundancy or intentional double-dips.
 
-#### Checklist tab
-- Extension page listing every GE code required for the student's declared major.
-- Each requirement shows satisfied / planned / open, with the specific course(s) filling it.
+#### Tracker tab
+- Extension page listing the campus-wide GE requirements, with progress from taken and planned courses and any imported Degree Progress Report completions.
+- Each requirement shows its satisfying course(s).
 - Detects double-dips explicitly and lets the user pick which GE a given course counts toward when a course satisfies multiple.
+- DC course lists are per-major and are not in v1.
 
 ## Data sources
 
 ### V1
-- **UCSC General Catalog** (`catalog.ucsc.edu`): course descriptions, prerequisites, GE designations. Bundled snapshot updated on extension release; fresh fetch on cache miss.
-- **MyUCSC class search DOM**: current-term section listings — meeting times, room, instructor, seats. Read via content script; not persisted beyond the user's plans.
-- **User input**: declared major, catalog year, courses already taken, named plans.
+- **UCSC General Catalog snapshot**: bundled with the extension (`packages/catalog-snapshot`). Course code, title, units, prerequisite text and GE codes. No network fetch at runtime.
+- **MyUCSC class search DOM**: current-term section listings: meeting times, room, instructor, seats. Read via content script; not persisted beyond the user's plans.
+- **User input**: taken-courses list, named plans, GE assignments, and Degree Progress Report completions imported from MyUCSC.
 
 ### VNext
 - Live catalog scraping with change detection.
@@ -73,75 +76,70 @@ Two surfaces answer: "Which GEs am I missing, and does this course help?"
 - Cross-device sync (would require a backend; explicitly out of v1).
 
 ## Data freshness and refresh behavior
-- **Catalog snapshot**: bundled with the extension; refreshed each release.
-- **On-demand fetch**: if the user visits a course page not in the snapshot, the extension fetches and caches it in IndexedDB for the session.
-- **MyUCSC section data**: read live from the DOM every time the panel opens; not cached, since seat counts and section availability change constantly.
-- **Manual refresh button** in the schedule panel forces a re-parse of the current MyUCSC page.
+- **Catalog snapshot**: bundled with the extension; regenerated manually with `build:catalog` before a release. The options page shows the catalog year as text.
+- **MyUCSC section data**: read live from the page DOM as results render; not cached, since seat counts and section availability change constantly.
 
 ## Feature specifics
 
 ### Schedule builder
 - Section representation: `{ courseCode, sectionNumber, meetingPattern[], instructor, seatsOpen }` where a meeting pattern is `{ days, startMinute, endMinute, location }`.
-- Conflict detection: two sections conflict if they share any day and their time ranges overlap by ≥ 1 minute. Cross-listed courses and lecture+lab pairs are treated as a single unit.
-- Export to Google Calendar: one event per meeting pattern; `RRULE:FREQ=WEEKLY` bounded by the term's academic calendar dates (bundled with the extension).
+- Conflict detection: two sections conflict if they share any day and their time ranges overlap by ≥ 1 minute. Lecture+lab and cross-listed grouping (`linkedSectionKeys`) is deferred until a real DOM signal is captured; until then each section is treated independently.
 
-### Prerequisite graph
+### Prerequisite popover
 - Parser converts catalog prerequisite prose (e.g. "MATH 19A; or MATH 20A; and CSE 30 or equivalent") into a structured tree of AND/OR nodes over course codes.
-- Graph engine renders course nodes and AND/OR gates; only course nodes are navigable.
-- Prereq strings that fail to parse fall back to a labeled "raw text" node rather than silently dropping the requirement.
+- Strings the grammar cannot fully understand fall back to raw text rather than being guessed.
 
 ### GE tracker
-- GE requirement schema per major: which GE codes are required, how many of each, allowed substitutions, double-dip rules.
-- Course-to-GE mapping: parsed from the catalog snapshot.
-- Progress computation: for each requirement, resolve completed and planned courses; report satisfied / partial / open. Double-dip resolution defers to the user's chosen assignment.
+- GE requirements come from the bundled snapshot (`GE_REQUIREMENTS`). Course-to-GE mapping is taken from the catalog snapshot.
+- Progress computation: for each requirement, resolve taken and planned courses; report satisfied / partial / open. Double-dip resolution defers to the user's chosen assignment.
 
 ## Storage (client-side only)
 
 ### What is stored
-- User settings: declared major, catalog year, Google Calendar linkage status, taken-courses list.
+- User settings: catalog year, Google Calendar linkage status, GE assignments, taken-courses list, imported GE completions.
 - Named schedule plans: courses + chosen sections per plan.
-- Cached catalog fetches (from on-demand lookups for courses not in the bundled snapshot).
 
 ### Storage medium
-- **IndexedDB via Dexie** for plans, taken courses, and catalog cache (larger, structured).
-- **`chrome.storage.local`** for user settings (small, cross-context, syncs naturally across popup/content-script/options).
-- **Session storage** for transient parse results tied to the currently open MyUCSC page.
+- **`chrome.storage.local`** for settings, taken courses, and plans (small, cross-context, so popup, content script, and options page see the same data).
+- **`chrome.storage.session`** for the cached Google access token (cleared when the browser session ends).
+- No IndexedDB and no Dexie.
 
 ### Retention
 - Kept until the user deletes them, uninstalls the extension, or clears browser data. No expiry.
 
 ## Privacy and compliance
-- No accounts. No off-device telemetry by default. No backend.
-- Google Calendar access is opt-in and revocable from the extension options page or from the user's Google account settings.
+- No accounts. No telemetry. No backend.
+- Google Calendar access is opt-in. Unlink on the options page clears the cached token, and access can be fully revoked from the user's Google account permissions page.
 - MyUCSC content is read from the user's own already-authenticated session; the extension does not proxy or exfiltrate any MyUCSC data.
-- Content script runs only on `*.ucsc.edu`.
+- Content scripts run only on `https://my.ucsc.edu/*` and `https://pisa.ucsc.edu/*`.
 
 ## V1 permissions (Chrome)
-- `storage` — user settings.
-- `identity` — Google OAuth for calendar export (opt-in flow).
-- Host permissions: `*.ucsc.edu/*`, `www.googleapis.com/calendar/*`.
-- No `tabs` permission; no `activeTab` beyond what content scripts already provide.
+- `storage`: user settings, taken courses, and plans.
+- `identity`: Google OAuth for calendar export (opt-in flow).
+- Host permissions: `https://www.googleapis.com/calendar/*` only.
+- Content script matches (`my.ucsc.edu`, `pisa.ucsc.edu`) are declared in `content_scripts`, not in host permissions.
+- No `tabs` permission; no `activeTab`.
 
 ## Exports
-- **Google Calendar**: batch-create events for all sections in the selected plan.
-- **iCal (`.ics`) download**: same event data, downloadable file for users who don't want to link a Google account.
-- **PNG of weekly grid**: from the schedule builder, for sharing.
+- **`.ics` download**: one recurring weekly event per meeting pattern, bounded by a term first and last day the user enters. Primary export path; no account needed.
+- **Google Calendar**: batch-create the same events in the user's calendar. Shipped only if Decision D2 clears (live OAuth check passes and the owner accepts the unverified-app limits or completes Google's verification). Otherwise its controls are to be hidden from the build (plan T2.1; not yet gated in code).
+- No PNG export in v1.
 
 ## MVP acceptance criteria
-- User can build a weekly schedule from MyUCSC search, see conflicts, and export to Google Calendar.
-- Every catalog course page shows a prerequisite graph with correct upstream/downstream navigation.
-- After picking a major, the GE tracker shows correct progress and flags double-dips.
-- All state persists across browser sessions and profile restarts.
+- User can build a weekly schedule from MyUCSC search, see conflicts, and export a `.ics` file.
+- Every MyUCSC search result row offers a prerequisite popover with AND/OR chips, and shows raw text when a prerequisite string does not parse.
+- The GE tracker shows progress from taken and planned courses and flags double-dips.
+- Plans, taken courses and settings persist across browser restarts.
 
 ## V1 success criteria
-- **Primary KPI**: median time from "class search opened" to "schedule exported."
-- Secondary KPIs:
-  - percentage of users who complete a schedule export in their first session,
-  - percentage of course pages that render a fully-parsed prereq graph (parser coverage),
-  - percentage of GE requirements that resolve without manual double-dip intervention.
+Targets, measured without telemetry (see `V1_FEATURES_AND_TECH.md` §9):
+- Prereq parse rate: `coverage:prereq` on the bundled snapshot, with the stop rule from the plan.
+- Adapter correctness. Target: 100% of captured rows parse (verbatim-capture fixture tests).
+- Export correctness. Target: `.ics` output round-tripped through an independent parser passes all checks.
+- Live smoke: the §9 launch checklist run by the owner on real MyUCSC before each release.
 
 ## Next spec expansion
-- Full parser grammar for catalog prerequisite prose.
+- Full parser grammar for prerequisite prose.
 - Failure-mode catalog for MyUCSC DOM changes (selector-layer design).
-- Detailed graph and calendar rendering specifications.
+- Term stamping of plans and lecture+lab linked sections, once real markup is captured.
 - V2 roadmap (four-year planner, professor ratings, grade distributions, cross-device sync).

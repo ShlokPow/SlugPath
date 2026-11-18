@@ -842,35 +842,28 @@ there a graph view":
 
 ## 9. Where current code diverges from `V1_FEATURES_AND_TECH.md`
 
-The spec document is the original plan; it is **not** kept in sync with
-implementation and shouldn't be read as current state. As of this writing:
+Scope source of truth: `V1_FEATURES_AND_TECH.md` §2 ("v1 scope (settled)"). `SlugPath.md`
+is reconciled to that section.
 
-- **Not implemented yet:** catalog-driven major list (the options page major
-  picker is a hardcoded 3-item placeholder), catalog-page GE badges (deferred
-  — would need a new `catalog.ucsc.edu` adapter built from scratch, since that
-  adapter was deleted along with the prereq graph, §8), per-major DC course
-  data (`DC_COURSES_BY_MAJOR` ships empty, §4.7), and the extension's icon
-  set / Web Store screenshots (design assets, not code — `manifest.config.ts`
-  still declares no `icons`, and the store requires at least a 128px one).
-- **Partially implemented:** the catalog-year picker (§4.9) exists but is a
-  one-item placeholder, since only one catalog snapshot (2026-2027) is
-  bundled — there's nothing real to pick between yet.
-- **Implemented differently from the spec's sketch:** calendar export (§4.8)
-  ships without the `ics` npm package, without bundled academic-calendar
-  dates, and with `COUNT` rather than `UNTIL` — see §7's table for each
-  reason.
-- **Built, then removed:** the React Flow + `dagre` prerequisite graph (see
-  §8) — the spec still describes it as a planned v1 feature; it was replaced
-  by the narrower prereq popover.
-- **Never added:** Tailwind CSS and `lucide-react`, despite being named in
-  the tech stack — there's no styling framework in use; all injected UI uses
-  inline `style` objects.
-- **No catalog cache** — the "on-demand fetch for a course not in the
-  bundled snapshot" behavior the spec describes isn't implemented; only the
-  bundled snapshot is consulted.
-- **`getCurrentTerm`** exists in the MyUCSC adapter but has no caller yet —
-  i.e., `defaultTerm`/term-scoping behavior described in the spec isn't wired
-  up end-to-end.
+Divergences between §2 and the code that are still true:
+
+- **Google controls are not gated yet.** `options/Options.tsx` always renders
+  `GoogleCalendarSection`, and `schedule/ExportControls.tsx` always renders
+  "Add to Google Calendar". The placeholder client id is refused only at call
+  time in `export/googleCalendar.ts`. §2 requires these hidden (plan T2.1).
+- **No icons.** `manifest.config.ts` declares no `icons` or `default_icon`, and
+  `apps/extension/public/` does not exist (plan T3.1).
+- **Deferred in §2 and unwired:** `getCurrentTerm` (`adapters/myucsc.ts`) has no
+  production caller, and nothing assigns `linkedSectionKeys` outside tests (§10).
+- **Per-major DC data is empty:** `DC_COURSES_BY_MAJOR` in
+  `packages/catalog-snapshot/src/geRequirements.ts` is `{}`. §2 defers it.
+- **Misleading path name:** the popover lives in `apps/extension/src/prereq-graph/`
+  (`PrereqPopover.tsx`), although no graph exists.
+
+Everything else in §2 matches the code: `chrome.storage.local` storage with no
+Dexie or IndexedDB, a bundled catalog snapshot with no network fetch (the bundled file is read via `chrome.runtime.getURL`), Google
+auth via `chrome.identity.launchWebAuthFlow`, `.ics` download as the export
+path, no PNG export, no content script on `catalog.ucsc.edu`, and no telemetry.
 
 ## 10. Open/known issues as of this writing
 
