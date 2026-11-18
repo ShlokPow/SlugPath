@@ -11,7 +11,7 @@ export default defineManifest({
   version: pkg.version,
   version_name: `${pkg.version} (catalog ${catalogVersion.version})`,
   permissions: ['storage', 'identity'],
-  host_permissions: ['*://*.ucsc.edu/*', 'https://www.googleapis.com/*'],
+  host_permissions: ['https://www.googleapis.com/calendar/*'],
   // Google Calendar export (src/export/googleCalendar.ts). The client id is a
   // per-project credential from the Google Cloud console, not a repo secret to
   // commit: a real release build sets SLUGPATH_OAUTH_CLIENT_ID, and any other
