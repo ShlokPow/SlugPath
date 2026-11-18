@@ -11,9 +11,8 @@ doc, `docs/ARCHITECTURE.md` — a maintained, interview-oriented reference for
 *current* system design (not a session log); keep it updated alongside this
 file whenever you land a change, per its own maintenance note at the top.
 
-**Nothing since `163f29c` is committed.** The 2026-10-12 Phase 6/7 work and
-every fix below are uncommitted working-tree changes on `main`. Commit them
-before anything else, then do the usual `main`→`iteration` sync.
+Everything since `163f29c` was committed as `2525512` and pushed to `main`.
+v1 work now follows `V1_FEATURES_AND_TECH.md` on `release/v1-prep`.
 
 ## Session update (2026-10-18 to 2026-10-23) — live-testing fixes
 
@@ -39,8 +38,6 @@ End state: 150 tests pass, lint/typecheck/build clean.
      genuinely missing plan. ARCHITECTURE §4.1.
    - Old per-origin data isn't migrated (pre-release); the user recreated
      their plan.
-   - `docs/add-to-plan-bug.md` is the untracked scratch write-up of the wrong
-     diagnosis, with a correction note at the top. Safe to delete.
 2. **Panel toolbar overflowed the 320px panel** (Delete button cut off). The
    toolbar row now `flex-wrap`s, buttons are `white-space: nowrap`, and the
    plan `<select>` flexes. Confirmed by the user.

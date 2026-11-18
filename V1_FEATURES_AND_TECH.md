@@ -26,7 +26,8 @@ _Rewritten 2026-11-16 against the repo at `163f29c` plus the uncommitted working
 | 7 Polish | Code done | Icons, screenshots, policy hosting |
 | 8 Release | Not started | Everything in §7 Wave 4 |
 
-**The entire working tree since `163f29c` is uncommitted.** That is T0.1 and blocks everything.
+The working tree since `163f29c` was committed as one commit (`2525512`, pushed to `main`) rather
+than the planned split; T0.1 is done. Work continues on `release/v1-prep`.
 
 ---
 
@@ -84,7 +85,7 @@ shadow-DOM mounts with inline styles, Vitest + happy-dom. Packages: `apps/extens
 | F8 | Day codes are `string[]`; the grid bug (`'Mon'` vs `'M'`) was invisible to the compiler and `conflicts.test.ts` still uses fake codes. | `Day` union type so the mismatch is a type error. | T1.2 |
 | F9 | Privacy policy "hosted on GitHub Pages from `docs/`" would publish `HANDOFF.md` and `ARCHITECTURE.md` too. | Link the policy file's public GitHub URL, or publish only that file. | D3, H3 |
 | F10 | Unpacked extension ID depends on the load folder and differs from the store ID; the OAuth redirect URI depends on the ID. Unplanned. | Always load from `apps/extension/dist` at the same path; register both dev and store redirect URIs on the one client. | H1, H7 |
-| F11 | A month of work sits uncommitted on `main`. | Commit first. | T0.1 |
+| F11 | A month of work sat uncommitted on `main`. | Committed as `2525512` (one commit, not split; history is not rewritten). | T0.1 |
 | F12 | Store submission needs written permission justifications and listing copy; not in the plan. | Draft them in-repo. | T1.7 |
 | F13 | Version is `0.0.1`; nothing says when it becomes `1.0.0`, or that the tag must match. | Bump at release; CI checks tag = package version. | T1.4, T4.1 |
 
@@ -236,12 +237,12 @@ Human gates have no code dependency: **send the §8 asks to the owner on day one
 Owner key: **O** = Opus, **K** = Haiku worker, **H** = human.
 
 ### Wave 0 — make the tree safe
-- [ ] **T0.1 (O) Commit the working tree.** Run the check suite first. Delete
+- [x] **T0.1 (O) Commit the working tree.** Run the check suite first. Delete
   `docs/add-to-plan-bug.md` (HANDOFF marks it a wrong diagnosis). Split into logical commits:
   storage move off Dexie · export (`src/export/`, `ExportControls.tsx`) · Phase 7 hardening
   (`layoutWarning.ts`, a11y, `takenCourseStore.ts`) · live-testing fixes (`WeeklyGrid`) · docs.
   Then create `release/v1-prep`. *Done when:* `git status` clean, suite green.
-- [ ] **Wave 0 integration gate (O).** Full check suite green on `release/v1-prep`.
+- [x] **Wave 0 integration gate (O).** Full check suite green on `release/v1-prep`.
 
 ### Wave 1 — parallel, disjoint files
 - [ ] **T1.1 (K) Narrow host permissions.** *Files:* `apps/extension/manifest.config.ts`.
