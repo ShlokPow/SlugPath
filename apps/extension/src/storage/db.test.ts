@@ -1,12 +1,10 @@
-import 'fake-indexeddb/auto'
-import { afterEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from './db'
+import { installChromeStorageMock } from './testChromeMock'
 
-afterEach(async () => {
-  await Promise.all([db.plans.clear(), db.takenCourses.clear(), db.catalogCache.clear()])
-})
+beforeEach(() => installChromeStorageMock())
 
-describe('SlugPathDB', () => {
+describe('db', () => {
   it('stores and retrieves a plan by id', async () => {
     await db.plans.add({
       id: 'plan-1',
@@ -23,20 +21,17 @@ describe('SlugPathDB', () => {
 
   it('keys taken courses by course code', async () => {
     await db.takenCourses.put({ courseCode: 'CSE101', term: 'fall-2025', gradeSelfReported: 'A' })
+    await db.takenCourses.put({ courseCode: 'CSE101', term: 'winter-2026' })
 
-    const course = await db.takenCourses.get('CSE101')
-    expect(course?.term).toBe('fall-2025')
+    expect(await db.takenCourses.toArray()).toEqual([{ courseCode: 'CSE101', term: 'winter-2026' }])
   })
 
-  it('keys catalog cache entries by course code + catalog year', async () => {
-    await db.catalogCache.put({
-      courseCode: 'CSE101',
-      catalogYear: '2025-2026',
-      snapshot: { title: 'Intro to CS' },
-      fetchedAt: Date.now(),
-    })
+  it('updates and deletes by key', async () => {
+    await db.takenCourses.put({ courseCode: 'CSE101', term: 'fall-2025' })
+    await db.takenCourses.update('CSE101', { gradeSelfReported: 'B' })
+    expect((await db.takenCourses.get('CSE101'))?.gradeSelfReported).toBe('B')
 
-    const entry = await db.catalogCache.get(['CSE101', '2025-2026'])
-    expect(entry?.snapshot).toEqual({ title: 'Intro to CS' })
+    await db.takenCourses.delete('CSE101')
+    expect(await db.takenCourses.get('CSE101')).toBeUndefined()
   })
 })

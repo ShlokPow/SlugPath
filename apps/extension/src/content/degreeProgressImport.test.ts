@@ -1,5 +1,4 @@
 // @vitest-environment happy-dom
-import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../storage/db'
 import { installChromeStorageMock } from '../storage/testChromeMock'

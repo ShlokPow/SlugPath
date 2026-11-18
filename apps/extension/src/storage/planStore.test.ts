@@ -1,12 +1,10 @@
-import 'fake-indexeddb/auto'
-import { afterEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from './db'
 import { addSectionToPlan, createPlan, deletePlan, duplicatePlan, removeSectionFromPlan, renamePlan } from './planStore'
+import { installChromeStorageMock } from './testChromeMock'
 import type { Section } from './types'
 
-afterEach(async () => {
-  await Promise.all([db.plans.clear(), db.takenCourses.clear(), db.catalogCache.clear()])
-})
+beforeEach(() => installChromeStorageMock())
 
 function section(overrides: Partial<Section> & Pick<Section, 'courseCode' | 'sectionNumber'>): Section {
   return { meetingPattern: [], instructor: 'Staff', seatsOpen: 10, ...overrides }

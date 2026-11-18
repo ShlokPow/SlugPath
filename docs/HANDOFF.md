@@ -1,13 +1,204 @@
-# Handoff — Phase 5 merged, iteration synced
+# Handoff — Phase 6 built; Phase 7 code done, assets outstanding
 
-Status snapshot as of `main` @ `f5879b1` (2026-10-12; PR #4 merged
-`feature/ge-tracker`, `docs/ARCHITECTURE.md` added and updated for it, and
-`iteration` is fast-forwarded to match). This doc exists so a fresh session
-can pick up Phase 6 (or whatever's next) without re-deriving the last few
-sessions' context. There is also now a second doc, `docs/ARCHITECTURE.md` —
-a maintained, interview-oriented reference for *current* system design (not
-a session log); keep it updated alongside this file whenever you land a
-change, per its own maintenance note at the top.
+Status snapshot as of 2026-10-23: Phases 0–6 are implemented and Phase 7's
+*code* items are done. Live testing by the user since 2026-10-13 found and
+fixed three real bugs (storage split across origins, empty calendar grid,
+silent export button). What's left before a Web Store submission is non-code
+(icon assets, screenshots, hosted privacy policy) plus confirming Google
+Calendar export succeeds live. This doc exists so a fresh session can pick up
+without re-deriving the last few sessions' context. There is also a second
+doc, `docs/ARCHITECTURE.md` — a maintained, interview-oriented reference for
+*current* system design (not a session log); keep it updated alongside this
+file whenever you land a change, per its own maintenance note at the top.
+
+**Nothing since `163f29c` is committed.** The 2026-10-12 Phase 6/7 work and
+every fix below are uncommitted working-tree changes on `main`. Commit them
+before anything else, then do the usual `main`→`iteration` sync.
+
+## Session update (2026-10-18 to 2026-10-23) — live-testing fixes
+
+All from the user's hands-on testing of the built extension on real MyUCSC.
+End state: 150 tests pass, lint/typecheck/build clean.
+
+1. **"Add to plan" couldn't see plans: IndexedDB is per page origin.**
+   The 2026-10-13 fix (check that `activePlanId` exists, else alert and clear
+   it) misdiagnosed this. After it shipped, the button alerted "your active
+   plan no longer exists" while the panel showed that exact plan.
+   - **Real cause:** a content script's IndexedDB belongs to the *host page's*
+     origin. The panel mounts in the `my.ucsc.edu` top frame, the row buttons
+     run in the `pisa.ucsc.edu` iframe, and options/GE tracker run on the
+     extension origin: three separate `slugpath` databases. `activePlanId`
+     lives in the shared `chrome.storage.local`, so the iframe saw the id but
+     not the plan. Degree-progress imports never reached the options page for
+     the same reason.
+   - **Fix:** dropped Dexie (`dexie`, `dexie-react-hooks`, `fake-indexeddb`)
+     and moved `plans`/`takenCourses` into `chrome.storage.local`
+     (`storage/db.ts`'s `Collection`; `hooks.ts` subscribes via
+     `onChanged`). The unused `catalogCache` table went with it. The
+     dangling-id check in `handleAddClick` stays; it's still correct for a
+     genuinely missing plan. ARCHITECTURE §4.1.
+   - Old per-origin data isn't migrated (pre-release); the user recreated
+     their plan.
+   - `docs/add-to-plan-bug.md` is the untracked scratch write-up of the wrong
+     diagnosis, with a correction note at the top. Safe to delete.
+2. **Panel toolbar overflowed the 320px panel** (Delete button cut off). The
+   toolbar row now `flex-wrap`s, buttons are `white-space: nowrap`, and the
+   plan `<select>` flexes. Confirmed by the user.
+3. **Added sections never appeared in the weekly grid.** The adapter stores
+   day codes `M`/`T`/`W`/`Th`/`F`; `SchedulePanel.tsx`'s grid filtered on
+   `'Mon'`/`'Tue'`/…, so no section matched any column. The section list
+   doesn't check days, which is why sections showed there. `DAYS` is now
+   `[label, code]` pairs; `WeeklyGrid` is exported and covered by
+   `schedule/WeeklyGrid.test.tsx`. Confirmed by the user. (`conflicts.test.ts`
+   still builds sections with `'Mon'`-style codes; it passes because it only
+   compares codes to each other, but it doesn't use real ones.)
+4. **"Add to Google Calendar" did nothing.** Three layers, all fixed in
+   `schedule/ExportControls.tsx` / `export/`:
+   - The buttons were `disabled` until there was something to export, with
+     inline styling identical to enabled. Now never disabled for that;
+     clicking shows `exportBlocker()`'s specific reason.
+   - That reason is the same text the idle hint already shows, so a blocked
+     click still looked like nothing happened. Blocked clicks and failures
+     now render the status line bold red, and editing a date clears it.
+   - `authToken()` throws a clear message for the `REPLACE_ME` placeholder
+     client id (tested in `export/googleCalendar.test.ts`), and `messages.ts`
+     turns an unanswered `sendMessage` into "reload the extension".
+5. **OAuth client id created** by the user. Deliberately not written into the repo, per
+   `manifest.config.ts`; ask the user for it. Local builds need
+   `SLUGPATH_OAUTH_CLIENT_ID=<id> ./node_modules/.bin/vite build` (from
+   `apps/extension`). **Not yet set as the GitHub repo secret** that
+   `release.yml` reads.
+
+6. **Sign-in switched to `launchWebAuthFlow`** (2026-10-29). With dates
+   filled, export reached Google and failed with "Error 400:
+   invalid_request — Custom URI scheme is not supported on Chrome apps".
+   Google no longer accepts `getAuthToken` for unverified Chrome-extension
+   clients. The worker now runs the implicit flow and caches the token in
+   `chrome.storage.session` (details in ARCHITECTURE.md §4.8). **The OAuth
+   client must be type "Web application"** with authorized redirect URI
+   `https://<extension-id>.chromiumapp.org/`.
+
+**Open, pick up here:** a Google export has still never succeeded live. The
+user needs to create a Web application client with the redirect URI above
+(the extension ID is on `chrome://extensions`) and send its client id, then
+rebuild with it and test. The manifest has no `key`, so the ID, and with it
+the redirect URI, depends on the folder the unpacked extension is loaded
+from.
+
+### Gotchas hit this session (don't rediscover these)
+
+- **Never use IndexedDB/`localStorage` from a content script for extension
+  state.** It silently scopes to whatever site the frame is on. Use
+  `chrome.storage.*`.
+- **Don't use `chrome.identity.getAuthToken` for Google.** Unverified
+  Chrome-extension clients get "Custom URI scheme is not supported on Chrome
+  apps". Use `launchWebAuthFlow` with a Web application client.
+- **A status message identical to the idle hint is invisible feedback.** Make
+  error states visually distinct.
+- **`corepack pnpm <script>` now fails here** with `spawnSync pnpm ENOENT`
+  (pnpm's deps-status check spawns a bare `pnpm`). `corepack pnpm add/remove`
+  still works. For checks, after `nvm use system`, call the binaries directly:
+  `node_modules/.bin/eslint .`, `node_modules/.bin/vitest run`, and from
+  `apps/extension`: `../../node_modules/.bin/tsc --noEmit -p tsconfig.json`,
+  `./node_modules/.bin/vite build`.
+
+## Session update (2026-10-12, later) — Phase 6 export + Phase 7 hardening
+
+Scope: `main` — new files plus small additive edits to existing ones, no
+feature branch, since nothing shared was rewritten. 146 tests pass (up from
+131), lint/typecheck/build clean. Remember the usual `main`→`iteration`
+fast-forward sync once this is committed.
+
+1. **Calendar export (Phase 6), all of it in `apps/extension/src/export/`** —
+   see `docs/ARCHITECTURE.md` §4.8 for the full design and §7 for the
+   decision table. Shape: one pure model (`events.ts: planToEvents`) feeding
+   two renderers (`ics.ts`, `googleCalendar.ts`), UI in
+   `schedule/ExportControls.tsx` inside the existing `SchedulePanel`.
+   Three deviations from the spec's Phase 6 checklist, each deliberate:
+   - **No bundled academic-calendar dates.** UCSC's real quarter start/end
+     dates aren't in the catalog snapshot and guessing them silently recurs
+     events for the wrong number of weeks — so the export UI asks for the
+     term's first/last day of instruction (two native `<input type="date">`).
+     Same call as `DC_COURSES_BY_MAJOR` staying empty. If someone sources the
+     real per-term dates later, prefill those inputs; don't change the model.
+   - **`COUNT=n` instead of `UNTIL=`** in the RRULE — `UNTIL` must be a UTC
+     instant for a zoned `DTSTART`, and every occurrence date is already
+     enumerated in `planToEvents`, so the count is exact and free of DST math.
+   - **No `ics` npm package** — the needed subset is ~40 lines (header,
+     VEVENT, RRULE, RFC 5545 escaping, 75-octet folding).
+2. **A real bug caught by round-tripping output through a third-party
+   parser** (`node-ical`, in a throwaway scratchpad script — not committed):
+   the first version emitted *floating* local times (no `TZID`), which read
+   correctly in Pacific but shifted the post-DST half of a fall quarter by an
+   hour in any importer that expands a floating recurrence in UTC — and shift
+   everything for a student importing from another timezone. Fixed by
+   emitting `DTSTART;TZID=America/Los_Angeles` plus a static `VTIMEZONE`
+   block. **Worth repeating for any format-generating code here:** our own
+   unit tests asserted the lines we meant to write, and all passed; only an
+   independent parser surfaced the semantic problem. 13/13 checks passed after
+   the fix (escaping, folding, occurrence count, 10am staying 10am across the
+   November DST change).
+3. **Phase 7 code items:**
+   - **"MyUCSC layout changed" fallback** (`content/layoutWarning.ts` +
+     `countResultRows()` in `adapters/myucsc.ts`). The trigger is **rows
+     present in the DOM but none parsed** — not a `waitForResults` timeout,
+     which happens on every MyUCSC page that isn't a class search and would
+     banner site-wide. Checked once in `scheduleInjection.ts`'s existing
+     re-scan, since all three row injectors read the same
+     `parseSearchResults` output and fail together.
+   - **Accessibility pass**: `aria-label`s naming the row on every injected
+     control (all rows have identically-labelled buttons), Escape-closes +
+     focus-return on the prereq popover, `<section aria-label>` on both
+     fixed panels, labels on the weekly grid's blocks. Everything was already
+     a native `<button>`/`<select>`, so keyboard nav needed nothing.
+   - **Manual taken-courses editor** on the options page, plus Google
+     Calendar link/unlink there — this was a V1 "must ship" settings item
+     (`V1_FEATURES_AND_TECH.md` §4) that had no UI at all.
+   - **Root-cause fix found doing that:** `degreeProgressImport.ts` wrote
+     `db.takenCourses` directly while the new editor normalized codes, so
+     `"CSE 12"` and `"CSE12"` would have become two rows for one course. Both
+     now go through `storage/takenCourseStore.ts`.
+   - **`docs/privacy-policy.md`** written (static, GitHub-Pages-ready; the
+     Web Store requires one even for a zero-collection extension).
+4. **Verified live against the real built extension** (Playwright
+   `launchPersistentContext` + `--load-extension`, same approach as prior
+   sessions): options page renders, taken-course add → Dexie (normalized to
+   `CSE101`) → survives reload → remove, and the Google link button's failure
+   surfaces a visible message through the background worker instead of
+   hanging. 12/12 checks. **Not verifiable here:** anything on
+   `my.ucsc.edu` (no UCSC login) — so `ExportControls` itself, and the GE row
+   badges from the last session, still have no live confirmation.
+5. **Phase 6's one real gap: there is no OAuth client id.**
+   `manifest.config.ts` reads `SLUGPATH_OAUTH_CLIENT_ID` (wired to a repo
+   secret in `release.yml`) and otherwise ships
+   `REPLACE_ME.apps.googleusercontent.com`, so Google export fails at
+   sign-in. Creating the Google Cloud project + OAuth client is a console
+   task for the repo owner; the `.ics` path needs no credential and works.
+   The Google *success* path has therefore never run end to end.
+
+### Gotchas hit this session (don't rediscover these)
+
+- **This machine is macOS, not the Windows box the older notes below assume**
+  (`gh.exe`, `winget`). The Node floor problem from the last session is the
+  same but the fix differs: the default `node` is nvm's v20.20.2 (below
+  `pnpm@11.9.0`'s `>=22.13`), and the usable one is `/usr/local/bin/node`
+  (v22.16.0, outside nvm). `corepack enable` can't symlink onto PATH, so run
+  `/usr/local/bin/corepack pnpm <cmd>` — **but** `pnpm typecheck` shells out
+  to `pnpm -r`, which then fails with `pnpm: command not found`. Fix that
+  worked: drop a 2-line `pnpm` shim (`exec /usr/local/bin/corepack pnpm "$@"`)
+  in a scratch dir and prepend it to `PATH`.
+- **Unit tests that assert the output you intended to write prove nothing
+  about whether that output is semantically right.** See point 2 — all ICS
+  tests were green while the file had a real DST bug. For any
+  format-generating code, round-trip real output through an independent
+  parser once, even if the parser is only installed in a scratch dir.
+- **`chrome.identity` does not exist in a content script.** That, not style,
+  is why all Google Calendar work lives in the service worker behind a
+  message. `chrome.runtime.onMessage`'s listener must `return true` to keep
+  the reply channel open for an async handler.
+- **An unset GitHub Actions secret arrives as an empty string, not
+  undefined** — `process.env.X ?? fallback` ships a blank value; `||` is what
+  you want for build-time config like the OAuth client id.
 
 ## Session update (2026-10-12) — merged Phase 5, added docs/ARCHITECTURE.md
 
@@ -364,9 +555,11 @@ Everything in `V1_FEATURES_AND_TECH.md`'s execution plan through Phase 4 is
 implemented, tested, and verified live against real UCSC sites (Playwright,
 not just unit tests). Highlights worth knowing before touching adjacent code:
 
-- **Storage** (`apps/extension/src/storage/`): Dexie for `plans` /
-  `takenCourses` / `catalogCache`; `chrome.storage.local` for settings via
-  `settingsStore.ts`. See `docs/migrations.md` before changing either schema.
+- **Storage** (`apps/extension/src/storage/`): everything in
+  `chrome.storage.local`. `plans`/`takenCourses` are keyed collections
+  (`db.ts`), settings go through `settingsStore.ts`. Dexie was removed
+  2026-10-18 (see the session update above). See `docs/migrations.md` before
+  changing a stored shape.
 - **Prereq parser** (`packages/prereq-parser/`): tokenizer + recursive-descent
   parser, AST is `Course | And | Or | Constraint`. Deliberately: an OR group
   fails *entirely* (falls back to raw text) if any single member can't be
@@ -393,8 +586,8 @@ not just unit tests). Highlights worth knowing before touching adjacent code:
   extracted to `scheduleInjection.ts` for testability. Cross-listed/lab+lecture
   pairs are handled via `Section.linkedSectionKeys` and added as one atomic,
   *sequential* write (`resolveAtomicGroup` + a `for` loop, not
-  `Promise.all` — concurrent writes race against the same Dexie
-  read-modify-write and silently drop entries).
+  `Promise.all` — concurrent writes race against the same read-modify-write
+  of the `plans` collection and silently drop entries).
 - **GE tracker — merged to `main` via PR #4, 2026-10-12** (not yet on
   `iteration` — see the top-of-file status snapshot). See the 2026-08-19 to
   2026-08-22 session update above for full build detail. Pure logic in
@@ -471,21 +664,75 @@ JSDOM-level verification exists; no UCSC login available to check live
 collapsible `SchedulePanel.tsx` *were* confirmed live by the user in the
 2026-08-19 to 2026-08-22 session).
 
-**Known live bug, not yet fixed (see `docs/ARCHITECTURE.md` §10):** on
-`main` as of PR #3 (pre-Phase-5), `Panel.tsx` and `SchedulePanel` both
-mounted at the same fixed screen corner on `my.ucsc.edu`. PR #4 fixed this
-specifically by moving `Panel.tsx` to the bottom-right (see point 6 in the
-2026-08-19 to 2026-08-22 update above) — confirm this reads as fixed in
-`ARCHITECTURE.md` §10 next time that section is touched, since it was
-written before PR #4 merged.
+**Resolved, no longer an open item:** `Panel.tsx` and `SchedulePanel` used to
+both mount at the same fixed screen corner on `my.ucsc.edu` (pre-PR-#4). PR #4
+moved `Panel.tsx` to the bottom-right, and `ARCHITECTURE.md` §10 now records
+it as resolved — checked 2026-10-12, nothing left to do here.
 
-### Phase 6+ not started
+### Phase 6: Google Calendar and iCal export — built
 
-Google Calendar export, `.ics` export, polish/hardening, release — nothing
-done yet on any of these. Full detail in `V1_FEATURES_AND_TECH.md`.
+- [x] `oauth2` block in the manifest, scope `calendar.events`. A real client
+      id exists (2026-10-23) and is passed at build time via
+      `SLUGPATH_OAUTH_CLIENT_ID`; still needs setting as a repo secret.
+- [x] Promise-returning auth helper with the declined / expired-token paths
+      (`export/googleCalendar.ts`; `launchWebAuthFlow`, token cached in `chrome.storage.session`; 401 → clear → one retry).
+- [x] Export flow: confirm dialog → event list → sequential POSTs → status
+      line → partial-fail summary with a "Retry N failed" button that
+      re-sends only the failures (by index — re-POSTing a success duplicates
+      it).
+- [x] One weekly recurring event per meeting pattern — with `COUNT`, not
+      `UNTIL`, and `TZID`-zoned timestamps (see session notes above).
+- [ ] Bundled academic-calendar dates per term — **deliberately not done**;
+      the export UI asks for the term's first/last day instead. See the
+      session notes for why; prefilling those two inputs is the clean
+      follow-up if real dates get sourced.
+- [x] `.ics` path from the same event model, downloaded via a blob URL.
+- [x] Revoke-linkage button in options (drops the session-cached token).
 
-## Remaining phases after this
+### Phase 7: polish and hardening — code done, assets outstanding
 
-Phase 5 (GE tracker) → Phase 6 (Google Calendar / iCal export) → Phase 7
-(polish/hardening) → Phase 8 (release). Full detail for each lives in
-`V1_FEATURES_AND_TECH.md`.
+- [x] MyUCSC DOM-change fallback: a visible "layout may have changed" banner
+      when rows are present but none parse (`content/layoutWarning.ts`), on
+      top of the existing captured-fixture adapter tests.
+- [x] Fallback UI at the content-script mount points (the banner above; the
+      Degree Progress Report importer already reported failure in its own
+      button; the panels render an empty state rather than crashing).
+- [x] Accessibility pass (see session notes — `aria-label`s on injected
+      controls, Escape-closes on the popover, labelled regions).
+- [x] Copy pass — user-facing strings reviewed while touching them; nothing
+      found that needed rewriting beyond the new export/options copy.
+- [ ] **Icon set and Web Store screenshots** — not done, and not something to
+      fake: `manifest.config.ts` declares no `icons`/`action.default_icon`,
+      and the store requires at least a 128px icon. Needs a real designed
+      asset (and screenshots of the live extension on MyUCSC, which needs a
+      login).
+- [x] Privacy policy (`docs/privacy-policy.md`) — still needs *hosting*
+      (GitHub Pages on `docs/`) and the URL pasted into the store listing.
+
+### Phase 8: release — blocked on the above, not on code
+
+- [ ] Tag a release; CI already builds the zip (`release.yml`), now with the
+      OAuth secret threaded through the build.
+- [ ] Submit to the Web Store — blocked by the icon set, the hosted privacy
+      policy URL, and confirming Google export works. The store build's
+      extension ID differs from the unpacked one, so the OAuth client will
+      need that ID's `chromiumapp.org` redirect URI too.
+- [ ] Rollback plan: previous zip retained as a release artifact (CI already
+      does this); nothing to build.
+- [ ] Post-launch "SlugPath v2 candidates" issue list — not opened; it's a
+      GitHub-side task for the owner, and the cut list is already written down
+      in `V1_FEATURES_AND_TECH.md`'s non-goals.
+
+## What's genuinely left for v1
+
+Nothing in the code path except the two deferred-with-reasons items above
+(catalog-page GE badges, per-major DC data) and these:
+
+1. Confirm Google Calendar export succeeds live, and set
+   `SLUGPATH_OAUTH_CLIENT_ID` as a repo secret (client id now exists).
+2. An icon set, and store screenshots (design task, needs a UCSC login for
+   realistic shots).
+3. Hosting `docs/privacy-policy.md` (GitHub Pages).
+4. Live verification of the GE row badges, which needs a real authenticated
+   UCSC session. "Add to plan", the panel and its grid are now confirmed live
+   by the user.

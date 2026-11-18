@@ -14,6 +14,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+        # Google Calendar export's OAuth client id (manifest.config.ts). A
+        # repo without the secret set still builds — the manifest keeps the
+        # REPLACE_ME placeholder and only calendar export is non-functional.
+        env:
+          SLUGPATH_OAUTH_CLIENT_ID: ${{ secrets.SLUGPATH_OAUTH_CLIENT_ID }}
       - run: cd apps/extension/dist && zip -r ../../../slugpath-extension-${{ github.ref_name }}.zip .
       - uses: actions/upload-artifact@v4
         with:

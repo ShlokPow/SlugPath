@@ -1,5 +1,4 @@
 // @vitest-environment happy-dom
-import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '../storage/db'
 import { createPlan } from '../storage/planStore'
@@ -161,6 +160,23 @@ describe('injectAddToPlanButtons', () => {
     button?.click()
 
     await vi.waitFor(() => expect(alertSpy).toHaveBeenCalled())
+    expect(await db.plans.toArray()).toHaveLength(0)
+  })
+
+  it('clicking with a stale activePlanId (the plan was deleted out from under it) alerts, self-heals, and writes nothing', async () => {
+    document.body.innerHTML = RESULTS_GRID
+    await injectAddToPlanButtons(document)
+    // Settings point at a plan id that doesn't exist.
+    useSettingsStore.getState().setSettings({ activePlanId: 'deleted-plan-id' })
+    const alertSpy = vi.fn()
+    window.alert = alertSpy
+
+    const button = document.querySelector<HTMLButtonElement>('[data-slugpath-add]')
+    button?.click()
+
+    await vi.waitFor(() => expect(alertSpy).toHaveBeenCalled())
+    expect(alertSpy.mock.calls[0]?.[0]).toMatch(/no longer exists/)
+    expect(useSettingsStore.getState().settings.activePlanId).toBeNull()
     expect(await db.plans.toArray()).toHaveLength(0)
   })
 

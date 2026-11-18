@@ -3,8 +3,18 @@ import { usePlans, useSettings } from '../storage/hooks'
 import { createPlan, deletePlan, duplicatePlan, removeSectionFromPlan, renamePlan } from '../storage/planStore'
 import type { Plan, Section } from '../storage/types'
 import { findConflicts, sectionKey } from './conflicts'
+import { ExportControls } from './ExportControls'
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+// [column label, MeetingPattern.days code]. Codes are the adapter's
+// convention (adapters/myucsc.ts: 'Th' is the only two-letter one) — the
+// grid filters on the code, never the label.
+const DAYS = [
+  ['Mon', 'M'],
+  ['Tue', 'T'],
+  ['Wed', 'W'],
+  ['Thu', 'Th'],
+  ['Fri', 'F'],
+] as const
 const GRID_START_MINUTE = 7 * 60
 const GRID_END_MINUTE = 22 * 60
 const PIXELS_PER_MINUTE = 0.6
@@ -48,7 +58,10 @@ export function SchedulePanel() {
   }
 
   return (
-    <div style={{ ...panelStyle, height: collapsed ? 'auto' : panelStyle.height }}>
+    <section
+      aria-label="SlugPath schedule builder"
+      style={{ ...panelStyle, height: collapsed ? 'auto' : panelStyle.height }}
+    >
       <button
         type="button"
         onClick={() => setCollapsed((c) => !c)}
@@ -73,7 +86,7 @@ export function SchedulePanel() {
           {activePlan ? <ActivePlanView plan={activePlan} /> : <EmptyState onCreate={handleCreatePlan} />}
         </>
       )}
-    </div>
+    </section>
   )
 }
 
@@ -89,11 +102,12 @@ function PlanSwitcher(props: {
 }) {
   const { plans, activePlanId, onSwitch, onCreate, onRename, onDuplicate, onDelete, hasActivePlan } = props
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderBottom: '1px solid #ddd', fontSize: 12 }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, padding: '6px 10px', borderBottom: '1px solid #ddd', fontSize: 12 }}>
       <select
+        aria-label="Active plan"
         value={activePlanId ?? ''}
         onChange={(e) => onSwitch(e.target.value || null)}
-        style={{ fontSize: 12, padding: '3px 6px', borderRadius: 6, border: '1px solid #003c6c', color: '#003c6c' }}
+        style={{ flex: 1, minWidth: 0, fontSize: 12, padding: '3px 6px', borderRadius: 6, border: '1px solid #003c6c', color: '#003c6c' }}
       >
         <option value="">Select a plan…</option>
         {plans.map((p) => (
@@ -150,6 +164,7 @@ function ActivePlanView({ plan }: { plan: Plan }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <PickedSectionsList plan={plan} conflictPartners={conflictPartners} />
+      <ExportControls plan={plan} />
       <WeeklyGrid sections={plan.sections} conflictPartners={conflictPartners} />
     </div>
   )
@@ -188,7 +203,12 @@ function PickedSectionsList({ plan, conflictPartners }: { plan: Plan; conflictPa
                     linked
                   </span>
                 )}
-                <button type="button" onClick={() => removeSectionFromPlan(plan.id, key)} style={{ ...buttonStyle, padding: '1px 6px', marginLeft: 'auto' }}>
+                <button
+                  type="button"
+                  aria-label={`Remove ${key} from this plan`}
+                  onClick={() => removeSectionFromPlan(plan.id, key)}
+                  style={{ ...buttonStyle, padding: '1px 6px', marginLeft: 'auto' }}
+                >
                   Remove
                 </button>
               </div>
@@ -200,33 +220,48 @@ function PickedSectionsList({ plan, conflictPartners }: { plan: Plan; conflictPa
   )
 }
 
-function WeeklyGrid({ sections, conflictPartners }: { sections: Section[]; conflictPartners: Map<string, Section[]> }) {
+function formatMinute(minuteOfDay: number): string {
+  const hour24 = Math.floor(minuteOfDay / 60)
+  const minute = String(minuteOfDay % 60).padStart(2, '0')
+  const meridiem = hour24 < 12 ? 'am' : 'pm'
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12
+  return `${hour12}:${minute}${meridiem}`
+}
+
+export function WeeklyGrid({ sections, conflictPartners }: { sections: Section[]; conflictPartners: Map<string, Section[]> }) {
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '8px 10px' }}>
       <div style={{ display: 'flex', gap: 2 }}>
-        {DAYS.map((day) => (
+        {DAYS.map(([day]) => (
           <div key={day} style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#003c6c' }}>
             {day}
           </div>
         ))}
       </div>
       <div style={{ display: 'flex', gap: 2, position: 'relative', height: GRID_HEIGHT, border: '1px solid #ddd', borderRadius: 6 }}>
-        {DAYS.map((day) => (
+        {DAYS.map(([day, code]) => (
           <div key={day} style={{ flex: 1, position: 'relative', borderLeft: '1px solid #eee' }}>
             {sections.flatMap((section) =>
               section.meetingPattern
-                .filter((pattern) => pattern.days.includes(day))
+                .filter((pattern) => pattern.days.includes(code))
                 .map((pattern, i) => {
                   const key = sectionKey(section)
                   const partners = conflictPartners.get(key)
                   const top = Math.max(0, (pattern.startMinute - GRID_START_MINUTE) * PIXELS_PER_MINUTE)
                   const height = Math.max(2, (pattern.endMinute - pattern.startMinute) * PIXELS_PER_MINUTE)
+                  const label = `${key}, ${day} ${formatMinute(pattern.startMinute)}–${formatMinute(pattern.endMinute)}${
+                    partners ? `, conflicts with ${partners.map((p) => sectionKey(p)).join(', ')}` : ''
+                  }`
                   return (
                     <div
                       key={`${key}-${day}-${i}`}
                       // title attribute is the spec's required hover tooltip — no
                       // extra tooltip component needed for a native affordance.
-                      title={partners ? `Conflicts with ${partners.map((p) => sectionKey(p)).join(', ')}` : `${section.courseCode} ${section.sectionNumber}`}
+                      // role+aria-label so a screen reader gets the day and time
+                      // too, which the visible text has no room for.
+                      title={label}
+                      role="note"
+                      aria-label={label}
                       style={{
                         position: 'absolute',
                         top,
@@ -289,6 +324,7 @@ const buttonStyle: CSSProperties = {
   color: '#003c6c',
   cursor: 'pointer',
   fontSize: 11,
+  whiteSpace: 'nowrap',
 }
 
 const linkedBadgeStyle: CSSProperties = {

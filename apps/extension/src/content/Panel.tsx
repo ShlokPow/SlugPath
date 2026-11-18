@@ -54,7 +54,8 @@ export function Panel() {
   const satisfiedCount = slots.filter((s) => s.satisfied).length
 
   return (
-    <div
+    <section
+      aria-label="SlugPath general education progress"
       style={{
         position: 'fixed',
         bottom: 16,
@@ -109,6 +110,6 @@ export function Panel() {
           ))}
         </div>
       )}
-    </div>
+    </section>
   )
 }

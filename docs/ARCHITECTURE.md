@@ -18,7 +18,7 @@ interviewer might probe on.
 A Chrome MV3 extension (no backend, no accounts) that injects UI into UCSC's
 own MyUCSC pages: a persistent weekly-schedule builder with conflict
 detection, and a per-course "what does this require" popover in class search
-results. All state lives in the browser (IndexedDB + `chrome.storage.local`).
+results. All state lives in the browser, in `chrome.storage.local`.
 Two standalone packages (`prereq-parser`, `catalog-snapshot`) hold logic that
 doesn't need a DOM and is reused across contexts.
 
@@ -34,16 +34,17 @@ apps/extension/           the extension itself (content scripts, panels, storage
   src/adapters/            DOM-scraping layer for external sites (MyUCSC, Degree Progress Report)
   src/background/          MV3 service worker
   src/content/             content-script entry + DOM injection glue
+  src/export/              plan -> calendar events, .ics rendering, Google Calendar API
   src/ge-tracker/          GE progress logic + the standalone tracker page
   src/options/             extension options page (not a content script)
   src/prereq-graph/        prereq popover UI + its pure display-transform logic
   src/schedule/            schedule domain logic (conflicts) + panel UI
-  src/storage/             Dexie DB, chrome.storage settings, Zustand bridge, hooks
+  src/storage/             chrome.storage collections + settings, Zustand bridge, hooks
   manifest.config.ts        MV3 manifest, generated via @crxjs/vite-plugin
 packages/prereq-parser/   tokenizer + recursive-descent parser for catalog prereq prose
 packages/catalog-snapshot/ course data types + query API + the bundled gzipped snapshot + the GE requirements dataset
 scripts/                  one-off Node script that scrapes catalog.ucsc.edu to build the snapshot
-docs/                     this file, docs/migrations.md, docs/HANDOFF.md (session log, not a reference doc)
+docs/                     this file, migrations.md, privacy-policy.md (Web Store requirement), HANDOFF.md (session log, not a reference doc)
 ```
 
 Two workspace packages exist instead of one monolith because both bodies of
@@ -104,7 +105,7 @@ every subsystem.
    replaces the grid without a page navigation) never double-injects.
 8. **"Add to plan" click** → `handleAddClick` reads the active plan id out of
    the Zustand settings store, resolves the section's *atomic group* (itself
-   plus any linked sections — see §4.3), and writes each one to Dexie
+   plus any linked sections — see §4.3), and writes each one to `chrome.storage.local`
    **sequentially**, not via `Promise.all` (two concurrent
    read-modify-write calls against the same plan document would race and the
    last writer would silently drop the other's section).
@@ -115,33 +116,39 @@ every subsystem.
    chips. No recursion into the prerequisite courses' own prerequisites —
    deliberately shallow (see §8).
 10. **Everything reactive.** The `SchedulePanel` (and anything else reading
-    Dexie or settings) uses `dexie-react-hooks`' `useLiveQuery` / the
-    Zustand store, so a write from step 8 re-renders the panel automatically
-    with no manual message-passing between the row button and the panel.
+    plans or settings) subscribes to `chrome.storage.onChanged` (via
+    `hooks.ts` / the Zustand store), so a write from step 8 — made in the
+    `pisa.ucsc.edu` results iframe — re-renders the `my.ucsc.edu` panel
+    automatically with no manual message-passing.
 
 ## 4. Subsystems
 
 ### 4.1 Storage layer (`src/storage/`)
 
-Two separate storage mechanisms, split by what they're for:
+Everything persisted lives in **`chrome.storage.local`**:
 
-- **Dexie (IndexedDB)** — `db.ts` — for data that's structured, can grow
-  large, and benefits from live queries: `plans`, `takenCourses`,
-  `catalogCache` (the last one is declared in the schema but has no writer
-  yet — catalog data today is the bundled snapshot only, see §4.6/§9).
-- **`chrome.storage.local`** — `settingsStore.ts` — for the single small
-  settings blob (`majorCode`, `catalogYear`, `calendarLinked`, `defaultTerm`,
-  `activePlanId`). This API (not Dexie) is used here specifically because it
-  natively syncs across extension contexts — content script, options page,
-  popup — without any message-passing, which a lone IndexedDB instance per
-  context would not give you for free.
+- `db.ts` — two keyed collections, `plans` (by `id`) and `takenCourses` (by
+  `courseCode`), each stored as one `{ [key]: item }` object under its own
+  storage key and rewritten whole on every write. `Collection` exposes a
+  small table-like API (`get`/`toArray`/`put`/`add`/`update`/`delete`/
+  `clear`) so call sites stay one-liners.
+- `settingsStore.ts` — the single small settings blob (`majorCode`,
+  `catalogYear`, `calendarLinked`, `defaultTerm`, `activePlanId`, ...).
 
-**Why Dexie over raw `indexedDB`:** the raw API is callback/event-based and
-verbose for exactly the two things this app actually needs — reactive
-"re-render when this table changes" queries (`useLiveQuery`) and a readable
-versioned-migration chain (`.version(n).stores(...)`, see below). Dexie
-gives both for free; hand-rolling either on top of raw `indexedDB` would be
-rebuilding a well-solved problem for no project-specific reason.
+**Why not IndexedDB:** a content script's IndexedDB belongs to the *host
+page's* origin, not the extension's. SlugPath's content script runs in the
+`my.ucsc.edu` top frame (panel), the `pisa.ucsc.edu` results iframe ("Add to
+plan" buttons) and the extension's own pages (options, GE tracker) — three
+origins, so IndexedDB would be three separate databases that can't see each
+other's plans. `chrome.storage.local` is one store shared by every extension
+context, and `chrome.storage.onChanged` fires in all of them, which is what
+makes the UI live across frames without message-passing. Data is small (a
+few plans of a few sections each), far under the 10MB quota.
+
+**Trade-off accepted:** whole-collection rewrites mean two contexts writing
+the same collection at the same instant are last-write-wins. In practice
+writes are user clicks in one place at a time; split into per-item storage
+keys if that ever bites.
 
 **Why a Zustand wrapper exists at all (`useSettingsStore.ts`):** `getSettings`/
 `setSettings` alone would work, but every UI read would need its own
@@ -166,18 +173,17 @@ useful work here, and Zustand is the thinnest wrapper that has a
 
 **Why plain async functions, not more hooks, for writes** (`planStore.ts`):
 writes are one-shot (`createPlan`, `addSectionToPlan`, ...), and reads
-already live in `hooks.ts` via `useLiveQuery`, which re-renders automatically
-the moment a write function touches `db.plans` — so there's no need for a
-write-side hook too.
+already live in `hooks.ts` (`usePlans`/`useTakenCourses`, an initial read
+plus an `onChanged` subscription), which re-render automatically the moment a
+write function touches `db.plans` — so there's no need for a write-side hook
+too.
 
 **Migrations** (see `docs/migrations.md` before touching either schema):
-Dexie schema changes are additive `this.version(n + 1).stores({...})` calls,
-never edits to an already-shipped version block, with `.upgrade()` for row
-transforms. Settings changes are additive fields merged under
-`DEFAULT_SETTINGS` by default; a breaking settings shape change gets a
-one-time "detect old shape, coerce, re-save" transform at the top of
-`getSettings()`, not a version counter — considered overkill for one flat
-settings object.
+collections and settings follow one rule, with no version counter. Additive
+fields need nothing: settings are merged under `DEFAULT_SETTINGS`, and a
+missing collection field is treated as its default at the read site. A
+breaking shape change gets a one-time "detect old shape, coerce, re-save"
+transform, in `getSettings()` or `Collection`'s read path.
 
 ### 4.2 MyUCSC adapter (`src/adapters/myucsc.ts`)
 
@@ -212,6 +218,19 @@ real external site needs a verbatim-capture test fixture (DevTools → Copy
 outer HTML), not a hand-written synthetic one** — a synthetic fixture can
 pass forever while asserting the wrong thing entirely.
 
+**Silence is the failure mode this adapter has, so there's an explicit
+fallback for it.** Every field getter degrades instead of throwing, which
+means a MyUCSC redesign shows up as rows on the page, zero parsed, no buttons
+injected, and nothing a student can see. `countResultRows()` (also here, with
+the other selectors) is the denominator: rows present but none parsed is the
+one reliable "layout changed" signal, and `content/layoutWarning.ts` turns it
+into a single dismissible banner. Checked in `scheduleInjection.ts`'s
+re-scan only — all three row injectors read the same
+`parseSearchResults` output, so they fail together. Deliberately *not*
+triggered by `waitForResults` timing out: that's the normal case on every
+MyUCSC page that isn't a class search, and bannering it would cry wolf
+site-wide.
+
 `linkedSectionKeys` (cross-listed / lecture+lab grouping) is deliberately
 left unset by this adapter today — there's no verified real-DOM signal for
 it yet, and the conflict/injection logic downstream (`resolveAtomicGroup`,
@@ -220,6 +239,11 @@ independently" when it's absent, so leaving it unset was preferred over
 guessing at a mechanism.
 
 ### 4.3 Schedule builder (`src/schedule/`, `src/storage/planStore.ts`)
+
+**Day codes** are the adapter's (`myucsc.ts`): `M`, `T`, `W`, `Th`, `F`.
+Everything downstream (conflicts, the panel's weekly grid, calendar export)
+compares against those codes. The grid's `DAYS` pairs each code with its
+column label ("Tue" ↔ `T`), so a label is never used as a code.
 
 **Conflict detection** (`conflicts.ts`) is a plain pairwise overlap check:
 two sections conflict if they share a day code and their `[startMinute,
@@ -235,16 +259,30 @@ section lists `linkedSectionKeys`, clicking "Add to plan" on it resolves the
 whole group from that same results-page scan and adds every member — a
 student can't attend a lecture without its linked discussion/lab. Writes
 within a group are sequential `await`s in a `for` loop, not `Promise.all`,
-specifically because `addSectionToPlan` is read-modify-write against one
-Dexie document: concurrent writes would read the same stale `plan.sections`
+specifically because `addSectionToPlan` is read-modify-write against the
+`plans` collection: concurrent writes would read the same stale `plan.sections`
 array and the second write to finish would silently clobber the first's
 section.
+
+**A dangling `activePlanId` self-heals at the one place it's written from.**
+`settings.activePlanId` has no referential integrity with the `plans`
+collection. The panel's own Delete re-points it, but any other removal (a
+cleared storage key, a future delete path) leaves it pointing at nothing. Every *read* site (`SchedulePanel`, `GETrackerPage`, `Panel`,
+`geBadgeInjection`) already tolerates this via `plans.find(...)` returning
+`undefined`. `handleAddClick` in `scheduleInjection.ts` is the one *write*
+path, so it's the one place that checks `db.plans.get(activePlanId)` before
+writing: a miss clears the dangling id (which every read site then renders
+as "no plan selected") and alerts the student instead of letting the write
+throw into a content-script's `console.error`, invisible to anyone but a
+developer.
 
 **`SchedulePanel.tsx`** is the always-on `position: fixed` panel on
 `my.ucsc.edu` (mounted once, top frame only — see §3). It reads the active
 plan via `usePlans()` + `settings.activePlanId`, renders a plan
-switcher/CRUD toolbar, a grouped picked-sections list, and a Mon–Fri weekly
-grid where each meeting pattern is positioned by simple linear
+switcher/CRUD toolbar (it `flex-wrap`s, so Rename/Duplicate/Delete drop to a
+second line in the fixed 320px width instead of overflowing), a grouped
+picked-sections list, and a Mon–Fri weekly grid (`WeeklyGrid`, columns keyed
+by the day codes above) where each meeting pattern is positioned by simple linear
 `minutes → pixels` math (`PIXELS_PER_MINUTE = 0.6`) rather than a grid/layout
 library — the grid has one fixed geometry (7am–10pm, 5 columns), so a
 dedicated scheduling-UI library would be solving a far more general problem
@@ -331,7 +369,7 @@ recursion into those courses' own prerequisites.
   `{ index, snapshot }` in a module-level `Promise` so every popover mount
   reuses the same parsed data instead of re-fetching per row.
 - `PrereqPopover.tsx` cross-references the parsed AST's course codes against
-  the user's taken courses and planned sections (from Dexie, via the shared
+  the user's taken courses and planned sections (via the shared
   `hooks.ts`) to color each course chip (taken / planned / neither).
 
 **Why `chrome.runtime.getURL` instead of the Vite `?url` import path
@@ -465,9 +503,9 @@ pure/impure split used throughout this codebase (`prereqText.ts`,
     `dist/` after a build — the manifest alone won't tell you it's missing.
 
 **Importing real data: the MyUCSC Degree Progress Report**
-(`adapters/degreeProgress.ts` + `content/degreeProgressImport.ts`) — there's
-still no manual "mark course taken" UI (see §9), so this is currently the
-only way taken-course data enters the system automatically. Two load-bearing
+(`adapters/degreeProgress.ts` + `content/degreeProgressImport.ts`) — the
+automatic way taken-course data enters the system; the options page's manual
+editor (§4.9) is the other. Two load-bearing
 facts about the source page shaped this adapter:
 - **It's genuine classic PeopleSoft** (`win0div*`, `ACE_*`,
   `submitAction_win0(...)` postback links) — unlike MyUCSC class search,
@@ -497,28 +535,164 @@ facts about the source page shaped this adapter:
   confirmed it renders under `my.ucsc.edu` itself (already a matched host),
   unlike class search which needed `pisa.ucsc.edu` added specifically.
 
-### 4.8 Options page (`src/options/`)
+### 4.8 Calendar export (`src/export/`, `src/schedule/ExportControls.tsx`)
+
+A plan becomes recurring calendar events through one pure model, rendered
+two ways — a downloaded `.ics` file (no auth) and POSTs to the Google
+Calendar API — so the two paths can't disagree about which meetings a plan
+contains.
+
+**The pure core** (`export/events.ts`): `planToEvents(plan, range)` emits one
+event per meeting pattern per section (a split lecture/lab pattern is two
+events), with the weekly recurrence expressed as BYDAY codes plus an
+occurrence `count`. Same pure/impure split as `conflicts.ts`/`geProgress.ts`:
+no DOM, no storage, no `chrome.*`.
+
+Three decisions inside it are worth knowing:
+
+- **The term's date range is a parameter, not bundled data.** The spec's
+  Phase 6 called for "bundled academic-calendar dates by term"; UCSC's real
+  quarter start/end dates aren't in the catalog snapshot, and a guessed range
+  silently produces events that recur for the wrong number of weeks — so the
+  export UI asks for the first and last day of instruction instead (native
+  `<input type="date">`, two fields). Same "don't ship guessed external data"
+  call as `DC_COURSES_BY_MAJOR` (§4.7).
+- **`COUNT`, not `UNTIL`.** RFC 5545 requires `UNTIL` to be a UTC instant
+  whenever `DTSTART` isn't floating, which would pull DST offset math into
+  this file; every occurrence date is already enumerated here, so the exact
+  count is free and timezone-proof.
+- **Local wall-clock timestamps plus an explicit zone**, never a UTC instant.
+  `events.ts` emits `20260928T100000` and both renderers attach
+  `UCSC_TIME_ZONE` (`America/Los_Angeles`) — a `DTSTART;TZID=…` plus a static
+  `VTIMEZONE` block in the `.ics`, the API's own `timeZone` field for Google.
+  That's what keeps a 10am class at 10am on both sides of the November DST
+  change a UCSC fall quarter straddles. *Floating* times (no zone at all)
+  were tried first and rejected on evidence: they resolve to the reader's
+  local zone, which silently shifts every meeting for anyone importing from
+  outside Pacific time, and some importers expand a floating recurrence in
+  UTC, which moves the post-DST half of the quarter by an hour (observed
+  while round-tripping real output through `node-ical`).
+
+**`.ics` rendering** (`export/ics.ts`) is hand-rolled rather than using the
+`ics` npm package the spec named: the needed subset is a VCALENDAR header,
+one VEVENT per meeting with an RRULE, RFC 5545 text escaping and 75-octet
+line folding — about 40 lines, which no dependency can beat. UIDs are
+deterministic (`summary` + start stamp), so re-importing a regenerated file
+updates the same events instead of duplicating them. The fold is
+character-based, not octet-based, with a `ponytail:` comment on the ceiling.
+
+**Google Calendar** (`export/googleCalendar.ts` + `export/messages.ts` +
+`background/index.ts`): `chrome.identity` is **not exposed to content
+scripts**, and the export UI lives in the `SchedulePanel` (a content script)
+— so the token and every API call live in the service worker, reached through
+one small typed message contract (`slugpath:calendar-link` / `-unlink` /
+`-export`). The options page uses those same messages rather than calling
+`chrome.identity` directly, so the token lifecycle has exactly one owner.
+- POSTs are **sequential, and per-event failures are collected rather than
+  aborting the run**: there's no transactional batch endpoint to get
+  atomicity from, so a partially-exported plan the student can retry beats
+  all-or-nothing. `ExportResult.failed` carries each failure's *index* in the
+  submitted array, so the panel's "Retry N failed" button re-sends exactly
+  those events — re-POSTing a successful one would duplicate it, since the
+  API has no upsert.
+- **Sign-in uses `chrome.identity.launchWebAuthFlow`, not `getAuthToken`.**
+  Google rejects `getAuthToken` for unverified Chrome-extension OAuth clients
+  ("Error 400: invalid_request — Custom URI scheme is not supported on Chrome
+  apps"), and non-Chrome Chromium browsers don't implement it. The worker
+  runs the implicit flow (`response_type=token`) against
+  `chrome.identity.getRedirectURL()` and caches `{token, expiresAt}` in
+  `chrome.storage.session`, which survives worker restarts and clears with
+  the browser. There's no refresh token, so after about an hour the next
+  export re-opens Google's (usually one-click) consent window. Unlink just
+  drops the cached token.
+- A 401 clears the cached token and retries once with a fresh one, once per
+  export run.
+- **The OAuth client id is build-time config, not a committed credential**:
+  `manifest.config.ts` reads `SLUGPATH_OAUTH_CLIENT_ID` (wired to a repo
+  secret in `release.yml`) and otherwise ships an obvious
+  `REPLACE_ME.apps.googleusercontent.com`, so an unconfigured build fails
+  loudly at sign-in instead of looking configured. `||` not `??` there: an
+  unset GitHub Actions secret arrives as an empty string. `authToken()`
+  checks for the placeholder itself and throws a message naming
+  `SLUGPATH_OAUTH_CLIENT_ID`, since Chrome's own error is an opaque
+  "invalid_client". The client is a Google Cloud OAuth client of type **"Web
+  application"** whose authorized redirect URI is
+  `https://<extension-id>.chromiumapp.org/`. The manifest has no `key`, so an
+  unpacked build's ID comes from its load path: load it from a different
+  folder and the redirect URI stops matching.
+- **Every click gives feedback.** `ExportControls`' buttons are never
+  disabled for "nothing to export" (a disabled button with the panel's
+  inline styling looks clickable and silently no-ops); clicking shows
+  `exportBlocker()`'s reason instead — dates missing, range inverted, empty
+  plan, or no meeting times in range. That reason is the same text as the
+  idle hint, so blocked clicks and failures render the status line bold red;
+  without that, a blocked click re-sets identical grey text and still reads as
+  "nothing happened". Editing either date clears the status. A
+  `window.confirm` that returns false (cancelled, or dialogs suppressed) sets a
+  status too, and `messages.ts` maps an unanswered `sendMessage`
+  (`undefined`) to an error.
+
+### 4.9 Options page (`src/options/`)
 
 A plain extension page (not a content script), so it renders with no shadow
 DOM and no content-script constraints — it's `createRoot` straight into
-`#root` the same as any ordinary Vite+React app. A major picker (hardcoded
-three-item list) and a catalog-year picker (hardcoded one-item list, since
-only one catalog snapshot is bundled) both write straight to `useSettings()`.
-Both lists are explicitly marked as placeholders — the major list pending a
-catalog-driven list, the year list pending a second bundled catalog year to
-actually choose between.
+`#root` the same as any ordinary Vite+React app. Three sections:
 
-### 4.9 Background service worker (`src/background/index.ts`)
+- **Degree**: a major picker (hardcoded three-item list) and a catalog-year
+  picker (hardcoded one-item list, since only one catalog snapshot is
+  bundled), both writing straight to `useSettings()`. Both lists are
+  explicitly marked as placeholders — the major list pending a catalog-driven
+  list, the year list pending a second bundled catalog year to choose between.
+- **Google Calendar**: link status plus link/unlink buttons, which go through
+  the background worker's messages (§4.8) rather than calling
+  `chrome.identity` here, even though an extension page could — one owner of
+  the token lifecycle.
+- **Courses already taken**: the manual editor for `db.takenCourses`. Until
+  this existed, taken courses could only enter the system via the Degree
+  Progress Report importer (§4.7). Writes go through
+  `storage/takenCourseStore.ts`, which normalizes the code with the same
+  `normalizeCode` the prereq popover and GE lookups use — and the DPR importer
+  was switched to that same function in the process, since two writers with
+  different normalization would key `"CSE 12"` and `"CSE12"` as separate rows
+  for one course. Codes are stored normalized (`CSE101`) and the space is
+  re-inserted for display only.
+
+### 4.10 Background service worker (`src/background/index.ts`)
 
 Mostly intentionally minimal: load/`onInstalled`/`onStartup` console logging
 only, no `chrome.alarms`. The comment in the file is explicit about why:
 `setInterval` would silently stop the moment the MV3 service worker
 suspends (~30s idle), and the correct periodic primitive (`chrome.alarms`)
 needs a permission not in the v1 permission list — so rather than ship a
-background task that silently stops working, there isn't one yet. The one
-real responsibility it has is routing the toolbar icon click to
-`chrome.tabs.create()` for the GE tracker page (§4.7) — the simplest
-possible "open a page" handler, not a message-routing layer.
+background task that silently stops working, there isn't one yet.
+
+Its two real responsibilities:
+- Routing the toolbar icon click to `chrome.tabs.create()` for the GE tracker
+  page (§4.7).
+- Owning every Google Calendar call (§4.8), because `chrome.identity` isn't
+  available to content scripts. Its `onMessage` listener handles only
+  `slugpath:calendar-*` messages (returning `false` for anything else so other
+  listeners aren't blocked) and `return true`s to keep the channel open for
+  the async reply — without that, Chrome closes the port the moment the
+  listener returns and `sendResponse` becomes a silent no-op.
+
+### 4.11 Accessibility conventions
+
+Nothing elaborate, but two rules hold across every surface:
+
+- **Native controls only.** Every injected affordance is a real `<button>`,
+  `<select>` or `<input>`, never a click-handled `<div>` — so keyboard
+  focus/activation and screen-reader roles come for free and there's no
+  bespoke keyboard handling to maintain. The one piece of real keyboard logic
+  is Escape-closes on the prereq popover (`prereqPopoverInjection.tsx`),
+  which also returns focus to the toggle button, because the popover takes no
+  focus itself.
+- **Injected controls carry an `aria-label` naming the row they act on.**
+  Every result row has an identically-labelled "Add to plan"/"Prereqs" button
+  and a strip of two-letter GE codes; the visible text can't disambiguate
+  them, so the label does (`Add CSE 101 01 to your SlugPath plan`). Same for
+  the weekly grid's blocks, which have no room to show the day and time they
+  represent.
 
 ## 5. Build & tooling
 
@@ -574,7 +748,9 @@ possible "open a page" handler, not a message-routing layer.
   and on push to `main`. No build/package step in CI.
 - **Release** (`.github/workflows/release.yml`): on a `v*` tag, builds and
   zips `apps/extension/dist` as a release artifact — no Chrome Web Store
-  publish automation yet, just the artifact.
+  publish automation yet, just the artifact. The build step passes
+  `SLUGPATH_OAUTH_CLIENT_ID` (a repo secret) through to the manifest (§4.8);
+  without it the zip still builds, with calendar export non-functional.
 
 ## 6. Testing strategy
 
@@ -587,8 +763,9 @@ possible "open a page" handler, not a message-routing layer.
   `myucsc.ts` history), not a style preference.
 - **Pure logic** (parser, `conflicts.ts`, `prereqText.ts`) is tested directly
   with plain unit tests / fixture tables — no DOM, no mocking needed.
-- **Dexie-touching code** uses `fake-indexeddb` so `db.test.ts` and
-  `planStore.test.ts` run under plain Node/Vitest with no real browser.
+- **React rendering** is tested sparingly, with `react-dom/server`'s
+  `renderToStaticMarkup` (`WeeklyGrid.test.tsx`), so no testing-library
+  dependency.
 - **`chrome.*` APIs** are stubbed with a small hand-rolled mock
   (`testChromeMock.ts`'s `installChromeStorageMock`) rather than a general
   chrome-mocking library — the surface actually used
@@ -611,15 +788,22 @@ possible "open a page" handler, not a message-routing layer.
 | Prereq prose → AST or raw-text fallback, no partial AST | Never silently misrepresent a requirement as weaker/stronger than it is | Best-effort partial parsing |
 | OR-group fails whole group on one bad member; AND-group drops the bad member | Bias toward never *understating* a requirement | Dropping failed members in both cases (understates OR requirements) |
 | Bundled, build-time catalog snapshot (gzip, committed to repo) | ~6,000-page live scrape is too slow/fragile for first paint, and shouldn't run in CI | Fetch-on-demand per course page only |
-| `chrome.storage.local` for settings, Dexie for everything else | Settings need cross-context sync with no message-passing; Dexie gives live queries for larger structured data | One storage mechanism for everything |
+| `chrome.storage.local` for everything (plans, taken courses, settings) | Content scripts run on two page origins plus the extension origin; IndexedDB is per-origin there, `chrome.storage.local` is shared and pushes `onChanged` to every context | Dexie/IndexedDB (split into one DB per origin), or Dexie in the service worker behind message-passing |
 | Zustand wrapper around settings, not raw `chrome.storage` calls everywhere | React components need to re-render on a setting changed in another context | Manual `useEffect`/polling per consumer |
-| Sequential (not `Promise.all`) writes for atomic/linked sections | `addSectionToPlan` is read-modify-write against one Dexie doc; concurrent writes race and drop data | Parallel writes |
+| Sequential (not `Promise.all`) writes for atomic/linked sections | `addSectionToPlan` is read-modify-write against the `plans` collection; concurrent writes race and drop data | Parallel writes |
 | Simple linear-math weekly grid, not a scheduling-UI library | Fixed, small geometry (7am–10pm, 5 columns) — a library would solve a more general problem than exists here | React Big Calendar / similar |
 | `DecompressionStream('gzip')` native API | Chrome-only extension; native API has existed since Chrome M80 | A userland gzip JS library |
 | Fixed-delay retry in the catalog scraper, not exponential backoff | Manual, infrequent, single-operator script — simplicity over robustness it doesn't need | Exponential backoff + jitter |
 | One `content_scripts` manifest entry with `all_frames: true`, host/frame branching in code | `@crxjs/vite-plugin`'s per-filename `web_accessible_resources` tracking breaks with two entries on the same file | Two manifest entries, one per host |
 | One pure `geProgress.ts` computing GE progress, shared by 3 UI surfaces (row badges, persistent widget, tracker page) | All three must agree on "is this GE satisfied" — computing it once and feeding all three removes any chance of surfaces silently disagreeing | A separate progress computation per surface |
 | GE tracker page opened via toolbar `action` + `chrome.tabs.create`, not `action.default_popup` | The tracker needs real page real estate (a full progress list plus a multi-row assignment picker) a small popup dropdown can't comfortably hold | `default_popup` |
+| Hand-written `.ics` writer, not the `ics` npm package the spec named | The needed subset (header, VEVENT, RRULE, escaping, folding) is ~40 lines; no dependency is smaller than that | `ics` |
+| `RRULE ... COUNT=n`, not `UNTIL=` | `UNTIL` must be a UTC instant for a zoned `DTSTART`, which drags DST math in; every occurrence is already enumerated, so the exact count is free | `UNTIL` bounded by term end |
+| Zoned wall-clock times (`TZID` + `VTIMEZONE`), not floating and not UTC | Keeps a 10am class at 10am across the mid-quarter DST change, and doesn't shift for someone importing from another timezone | Floating local time (tried, rejected on a round-trip test); UTC instants |
+| Term date range entered by the user, not a bundled academic calendar | UCSC's real quarter dates aren't in the catalog snapshot; a guessed range silently recurs for the wrong number of weeks | Bundling guessed per-term dates |
+| All Google Calendar work in the service worker, reached by one message contract | `chrome.identity` isn't exposed to content scripts, and the export UI is a content script | Direct `chrome.identity` calls per context |
+| Per-event failures collected + retried by index, not all-or-nothing | No transactional batch endpoint exists, and re-POSTing a succeeded event duplicates it (no upsert) | Abort on first failure; retry whole plan |
+| "Layout changed" banner driven by *rows present but none parsed* | The adapter degrades silently by design, so this is the only false-positive-free signal | Bannering on the `waitForResults` timeout (fires on every non-search page) |
 
 ## 8. Settled history: things tried and deliberately removed
 
@@ -661,25 +845,29 @@ there a graph view":
 The spec document is the original plan; it is **not** kept in sync with
 implementation and shouldn't be read as current state. As of this writing:
 
-- **Not implemented yet:** Google Calendar export, `.ics` export, a *manual*
-  "mark course taken" UI (taken courses currently only enter the system via
-  the Degree Progress Report importer, §4.7), catalog-driven major list (the
-  options page major picker is a hardcoded 3-item placeholder), catalog-page
-  GE badges (deferred — would need a new `catalog.ucsc.edu` adapter built
-  from scratch, since that adapter was deleted along with the prereq graph,
-  §8), and per-major DC course data (`DC_COURSES_BY_MAJOR` ships empty, §4.7).
-- **Partially implemented:** the catalog-year picker (§4.8) exists but is a
+- **Not implemented yet:** catalog-driven major list (the options page major
+  picker is a hardcoded 3-item placeholder), catalog-page GE badges (deferred
+  — would need a new `catalog.ucsc.edu` adapter built from scratch, since that
+  adapter was deleted along with the prereq graph, §8), per-major DC course
+  data (`DC_COURSES_BY_MAJOR` ships empty, §4.7), and the extension's icon
+  set / Web Store screenshots (design assets, not code — `manifest.config.ts`
+  still declares no `icons`, and the store requires at least a 128px one).
+- **Partially implemented:** the catalog-year picker (§4.9) exists but is a
   one-item placeholder, since only one catalog snapshot (2026-2027) is
   bundled — there's nothing real to pick between yet.
+- **Implemented differently from the spec's sketch:** calendar export (§4.8)
+  ships without the `ics` npm package, without bundled academic-calendar
+  dates, and with `COUNT` rather than `UNTIL` — see §7's table for each
+  reason.
 - **Built, then removed:** the React Flow + `dagre` prerequisite graph (see
   §8) — the spec still describes it as a planned v1 feature; it was replaced
   by the narrower prereq popover.
 - **Never added:** Tailwind CSS and `lucide-react`, despite being named in
   the tech stack — there's no styling framework in use; all injected UI uses
   inline `style` objects.
-- **`catalogCache` Dexie table exists in the schema but has no writer** — the
-  "on-demand fetch for a course not in the bundled snapshot" behavior the
-  spec describes isn't implemented; only the bundled snapshot is consulted.
+- **No catalog cache** — the "on-demand fetch for a course not in the
+  bundled snapshot" behavior the spec describes isn't implemented; only the
+  bundled snapshot is consulted.
 - **`getCurrentTerm`** exists in the MyUCSC adapter but has no caller yet —
   i.e., `defaultTerm`/term-scoping behavior described in the spec isn't wired
   up end-to-end.
@@ -696,6 +884,22 @@ implementation and shouldn't be read as current state. As of this writing:
   verification** — unlike the Degree Progress Report importer and the
   `Panel` widget, which were confirmed against the live site, there's no
   UCSC login available in an automated session to check this one live.
+- **The OAuth client id exists but lives only in the build environment**
+  (§4.8). A build without `SLUGPATH_OAUTH_CLIENT_ID` set (including a plain
+  `pnpm build`) still ships the `REPLACE_ME` placeholder. Release builds need
+  it set as a repo secret, and the unpacked extension's ID must keep matching
+  the one registered with Google.
+- **The Google Calendar *success* path has never run end to end.** No
+  successful event creation has been observed yet; the error paths show in
+  the panel and options page instead of hanging. The `.ics` output *was* validated independently, by round-tripping
+  real generated output through `node-ical` (escaping, 75-octet folding,
+  recurrence count, and the DST-crossing wall clock all confirmed).
+- **`ExportControls` (§4.8) renders on the live site, but no export from it
+  has been confirmed working there.** Its inputs (`planToEvents`,
+  `eventsToIcs`) are unit-tested and externally validated.
+- **The extension has no icons** — `manifest.config.ts` declares no `icons`
+  and no `action.default_icon`, which the Chrome Web Store requires before
+  submission.
 
 *(Resolved since the last pass: `Panel` and `SchedulePanel` used to both
 mount at the same fixed screen corner on `my.ucsc.edu` and silently stack —
@@ -706,6 +910,7 @@ fixed by moving `Panel` to `bottom-right`, see §4.7.)*
 ```
 pnpm dev             # vite dev server for the extension (apps/extension)
 pnpm build           # production build -> apps/extension/dist
+SLUGPATH_OAUTH_CLIENT_ID=<id>.apps.googleusercontent.com pnpm build   # same, with Google Calendar export enabled
 pnpm build:catalog   # re-scrape catalog.ucsc.edu, regenerate the bundled snapshot (manual, slow)
 pnpm lint            # eslint .
 pnpm typecheck       # per-package tsc --noEmit + scripts/tsconfig.json

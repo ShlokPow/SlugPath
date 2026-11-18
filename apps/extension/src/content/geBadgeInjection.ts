@@ -48,11 +48,16 @@ async function injectBadgesOnce(root: ParentNode, index: CatalogIndex): Promise<
 
     const cell = document.createElement('td')
     cell.setAttribute(INJECTED_ATTR, 'true')
+    // The badges are bare two-letter codes; the group label is what makes
+    // them comprehensible to a screen reader reading the row.
+    cell.setAttribute('aria-label', `General education codes for ${section.courseCode}`)
+    cell.setAttribute('role', 'group')
     for (const code of geCodes) {
       const isCovered = covered.has(code)
       const badge = document.createElement('span')
       badge.textContent = code
       badge.title = isCovered ? `${code} — already covered by a taken or planned course` : code
+      badge.setAttribute('aria-label', isCovered ? `${code}, already covered by a taken or planned course` : code)
       badge.setAttribute(COVERED_ATTR, String(isCovered))
       badge.style.cssText = badgeStyle(isCovered)
       cell.appendChild(badge)

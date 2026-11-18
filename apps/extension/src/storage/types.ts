@@ -34,14 +34,6 @@ export interface TakenCourse {
   gradeSelfReported?: string
 }
 
-export interface CatalogCacheEntry {
-  courseCode: string
-  catalogYear: string
-  // ponytail: snapshot shape isn't defined until Phase 2's catalog snapshot format lands
-  snapshot: unknown
-  fetchedAt: number
-}
-
 export interface Settings {
   majorCode: string | null
   catalogYear: string | null

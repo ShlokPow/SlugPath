@@ -20,18 +20,34 @@ function injectButtonsOnce(root: ParentNode): void {
     button.type = 'button'
     button.setAttribute(INJECTED_ATTR, 'true')
     button.setAttribute('aria-expanded', 'false')
+    button.setAttribute('aria-label', `Show prerequisites for ${section.courseCode}`)
     button.textContent = 'Prereqs'
     button.style.cssText =
       'font-size:12px;padding:2px 8px;border-radius:6px;border:1px solid #003c6c;background:#fff;color:#003c6c;cursor:pointer;'
 
     let mounted: { host: HTMLDivElement; root: Root } | null = null
 
+    function close(): void {
+      if (!mounted) return
+      mounted.root.unmount()
+      mounted.host.remove()
+      mounted = null
+      button.setAttribute('aria-expanded', 'false')
+      document.removeEventListener('keydown', onKeydown)
+      button.focus()
+    }
+
+    // Escape closes the popover from anywhere on the page, not just from
+    // inside it — the popover itself takes no focus, so a keyboard user's
+    // focus is still on the toggle button (or wherever they moved it) when
+    // they want it gone.
+    function onKeydown(event: KeyboardEvent): void {
+      if (event.key === 'Escape') close()
+    }
+
     button.addEventListener('click', () => {
       if (mounted) {
-        mounted.root.unmount()
-        mounted.host.remove()
-        mounted = null
-        button.setAttribute('aria-expanded', 'false')
+        close()
         return
       }
       const { host, root: popoverRoot } = createShadowMount()
@@ -40,6 +56,7 @@ function injectButtonsOnce(root: ParentNode): void {
       popoverRoot.render(<PrereqPopover courseCode={section.courseCode} />)
       mounted = { host, root: popoverRoot }
       button.setAttribute('aria-expanded', 'true')
+      document.addEventListener('keydown', onKeydown)
     })
 
     const cell = document.createElement('td')

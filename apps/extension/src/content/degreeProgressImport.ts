@@ -4,7 +4,7 @@
 // for how that page's markup works and what "satisfied, no course" means.
 
 import { parseDegreeProgressGE } from '../adapters/degreeProgress'
-import { db } from '../storage/db'
+import { addTakenCourse } from '../storage/takenCourseStore'
 import { useSettingsStore } from '../storage/useSettingsStore'
 
 const INJECTED_ATTR = 'data-slugpath-dpr-import'
@@ -26,10 +26,14 @@ async function handleImport(root: ParentNode, button: HTMLButtonElement): Promis
   // there's nowhere to put a "planned per DPR" course anyway: this
   // extension's "planned" means "in a Plan's sections", which needs a
   // specific MyUCSC section DPR doesn't expose.
+  // Via addTakenCourse, not db.takenCourses directly, so imported codes get
+  // the same normalization the options page's manual entry applies — two
+  // writers with different normalization would key "CSE 12" and "CSE12" as
+  // separate rows for the same course.
   for (const category of categories) {
     for (const course of category.courses) {
       if (course.status !== 'taken') continue
-      await db.takenCourses.put({ courseCode: course.courseCode, term: course.term })
+      await addTakenCourse(course.courseCode, course.term)
     }
   }
 

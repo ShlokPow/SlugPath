@@ -12,6 +12,18 @@ export default defineManifest({
   version_name: `${pkg.version} (catalog ${catalogVersion.version})`,
   permissions: ['storage', 'identity'],
   host_permissions: ['*://*.ucsc.edu/*', 'https://www.googleapis.com/*'],
+  // Google Calendar export (src/export/googleCalendar.ts). The client id is a
+  // per-project credential from the Google Cloud console, not a repo secret to
+  // commit: a real release build sets SLUGPATH_OAUTH_CLIENT_ID, and any other
+  // build keeps the obvious placeholder, which authToken() refuses with a clear
+  // message. Must be a "Web application" client whose redirect URI is
+  // chrome.identity.getRedirectURL() (https://<extension-id>.chromiumapp.org/).
+  oauth2: {
+    // `||`, not `??`: an unset GitHub Actions secret arrives as an empty
+    // string, which would otherwise ship as a blank client_id.
+    client_id: process.env.SLUGPATH_OAUTH_CLIENT_ID || 'REPLACE_ME.apps.googleusercontent.com',
+    scopes: ['https://www.googleapis.com/auth/calendar.events'],
+  },
   content_scripts: [
     {
       // Single entry, not split per-hostname: @crxjs/vite-plugin tracks

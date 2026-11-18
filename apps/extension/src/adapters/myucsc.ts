@@ -149,6 +149,15 @@ function hasResults(root: ParentNode): Element | null {
   return root.querySelector('[id^="rowpanel_"]')
 }
 
+// Result rows *present in the DOM*, parsed or not — the denominator callers
+// compare parseSearchResults()'s output against to tell "this page has no
+// search results" (normal) apart from "this page has results and we
+// understood none of them" (MyUCSC's layout changed). Lives here with every
+// other selector rather than in the caller.
+export function countResultRows(root: ParentNode): number {
+  return root.querySelectorAll('[id^="rowpanel_"]').length
+}
+
 // MyUCSC's search results load asynchronously into the DOM (PeopleSoft's
 // iframe/panel refresh), so callers can't just query on page load — they
 // need to wait for rows to appear. A MutationObserver on the results

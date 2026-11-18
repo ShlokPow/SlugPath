@@ -11,8 +11,6 @@
   "dependencies": {
     "@slugpath/catalog-snapshot": "workspace:*",
     "@slugpath/prereq-parser": "workspace:*",
-    "dexie": "^4.4.4",
-    "dexie-react-hooks": "^4.4.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "zustand": "^5.0.14"
@@ -23,7 +21,6 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^6.0.5",
-    "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.11.2",
     "vite": "^8.2.1"
   }
