@@ -39,7 +39,7 @@ can build a schedule without leaving the page you are already on.
 - **Calendar export.** Download your plan as an .ics file for any calendar app.
   Google Calendar export is optional and is included only in builds configured with
   a Google OAuth client. It runs only when you click "Add to Google Calendar" and
-  confirm.
+  confirm, or click "Retry" to resend events that failed.
 
 Everything SlugPath saves is stored on your device, in Chrome's extension
 storage. Nothing is sent to a SlugPath server, because there is no SlugPath
@@ -148,7 +148,8 @@ used by the form is unverified.
 ## 6. Policy/code mismatches
 
 Each entry quotes the policy sentence, states what the code does, and proposes
-the fix. The orchestrator applies the policy fixes. Nothing here edits the policy.
+the fix. All nine fixes were applied to `docs/privacy-policy.md` on 2026-11-18;
+the policy line numbers below refer to the version before that edit.
 
 **M1. Settings row lists "major".**
 - Policy (table row, line 18): "Your settings — major, catalog year, active plan, GE assignments, whether you linked a Google account — `chrome.storage.local`".
@@ -178,8 +179,8 @@ the fix. The orchestrator applies the policy fixes. Nothing here edits the polic
 
 **M6. "off by default" wording for Google export.**
 - Policy (line 42): "Exporting a plan to Google Calendar is optional and off by default."
-- Code: the "Add to Google Calendar" button is always rendered in the export controls (`apps/extension/src/schedule/ExportControls.tsx:106-107`). It does nothing until you click it and confirm (`ExportControls.tsx:76`). In a build without an OAuth client id, the click errors (`apps/extension/src/export/googleCalendar.ts:20-30`). T2.1 will hide the button in such builds; this listing text assumes T2.1 has landed.
-- Fix: "Google Calendar export is optional. It runs only when you click 'Add to Google Calendar' and confirm, and it is available only in builds configured with a Google OAuth client." The phrase "off by default" is accurate as a description of behavior, but the wording above is more precise.
+- Code: the "Add to Google Calendar" button is always rendered in the export controls (`apps/extension/src/schedule/ExportControls.tsx:106-107`). It does nothing until you click it and confirm (`ExportControls.tsx:76`); the "Retry N failed" button resends failed events without a second confirm (`ExportControls.tsx:109-113`). In a build without an OAuth client id, the click errors (`apps/extension/src/export/googleCalendar.ts:20-30`). T2.1 will hide the button in such builds; this listing text assumes T2.1 has landed.
+- Fix: "Google Calendar export is optional. It runs only when you click 'Add to Google Calendar' and confirm, or click 'Retry' to resend events that failed in that export. It is available only in builds configured with a Google OAuth client." The phrase "off by default" is accurate as a description of behavior, but the wording above is more precise.
 
 **M7. Google sign-in page is not named.**
 - Policy (Google Calendar section, lines 44-46): names `chrome.identity` and the Calendar scope, but not the Google sign-in page SlugPath opens.
