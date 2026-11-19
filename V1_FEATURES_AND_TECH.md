@@ -297,7 +297,7 @@ Owner key: **O** = Opus, **K** = Haiku worker, **H** = human.
 
   **Stop rule:** stop at ≥70% parsed, or after 4 batches, or when the top remaining pattern
   covers <40 courses — whichever comes first. Record the final number in §9.
-- [ ] **Wave 2 integration gate (O).** Full check suite green on the combined branch before the PR.
+- [x] **Wave 2 integration gate (O).** Full check suite green on the combined branch before the PR.
 
 ### Wave 3 — as human gates clear
 - [ ] **T3.1 (K) Wire icons.** *Depends:* H4. *Files:* `manifest.config.ts`, files under
