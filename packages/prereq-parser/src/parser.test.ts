@@ -230,3 +230,293 @@ describe('parsePrereq — grammar features', () => {
     expect(parsePrereq('Prerequisite(s): ABCDEF 10.')).toEqual({ ok: true, ast: course('ABCDEF 10') })
   })
 })
+
+describe('parsePrereq — Entry Level Writing requirement', () => {
+  const ELWR_C = { type: 'constraint', detail: 'Entry Level Writing and Composition requirements', child: null }
+  const ELWR = { type: 'constraint', detail: 'Entry Level Writing requirement', child: null }
+  const PERM = { type: 'constraint', detail: 'instructor permission', child: null }
+  const PLACE = { type: 'constraint', detail: 'placement by assessment', child: null }
+
+  it('parses "satisfaction of the Entry Level Writing and Composition requirements."', () => {
+    const raw = 'Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR_C })
+  })
+
+  it('parses the capitalized "Satisfaction of" variant', () => {
+    const raw = 'Prerequisite(s): Satisfaction of the Entry Level Writing and Composition requirements.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR_C })
+  })
+
+  it('parses the ELWR-or-permission OR branch', () => {
+    const raw = 'Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements; or by permission of the instructor.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [ELWR_C, PERM] } })
+  })
+
+  it('truncates the enrollment-restriction narrative after the ELWR clause', () => {
+    const raw =
+      'Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to senior anthropology majors.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR_C })
+  })
+
+  it('consumes the comma inside "and C1, C2 requirements" as part of the Composition phrase', () => {
+    const raw =
+      'Prerequisite(s): satisfaction of the Entry Level Writing and C1, C2 requirements. Enrollment is restricted to junior and senior physical and biological sciences majors.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR_C })
+  })
+
+  it('parses the singular "Entry Level Writing requirement" without Composition', () => {
+    const raw = 'Prerequisite(s): satisfaction of the Entry Level Writing requirement.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR })
+  })
+
+  it('accepts the "equirements" catalog typo for the Composition variant', () => {
+    const raw = 'Prerequisite(s): satisfaction of the Entry Level Writing and Composition equirements.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR_C })
+  })
+
+  it('accepts "Writing Requirement and Composition requirements" (requirement word in the middle)', () => {
+    const raw = 'Prerequisite(s): satisfaction of the Entry Level Writing Requirement and Composition requirements.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR_C })
+  })
+
+  it('parses "Entry Level Writing Requirement" with a capital R and no Composition', () => {
+    const raw = 'Prerequisite: satisfaction of the Entry Level Writing Requirement.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR })
+  })
+
+  it('parses plural "Entry Level Writing requirements" without Composition', () => {
+    const raw = 'Prerequisite(s): satisfaction of the Entry Level Writing requirements.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR })
+  })
+
+  it('parses the variant with no "the" and a truncated narrative', () => {
+    const raw =
+      'Prerequisite(s): satisfaction of Entry Level Writing and Composition requirements. Enrollment is restricted to senior anthropology majors.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR_C })
+  })
+
+  it('parses the no-space label variant with no "the" and a permission-code narrative', () => {
+    const raw =
+      'Prerequisite(s):satisfaction of Entry Level Writing and Composition requirements. Enrollment is restricted to College members; other students may contact the instructor for a permission code.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR_C })
+  })
+
+  it('parses a capitalized "Composition Requirements" variant', () => {
+    const raw = 'Prerequisite(s): satisfaction of the Entry Level Writing and Composition Requirements.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: ELWR_C })
+  })
+
+  it('ANDs an ELWR clause after a course with a comma-attached "and"', () => {
+    const raw =
+      'Prerequisite(s): PSYC 100, and satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to senior psychology and cognitive science majors.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'and', children: [course('PSYC 100'), ELWR_C] } })
+  })
+
+  it('ANDs two courses and an ELWR clause split by a semicolon', () => {
+    const raw =
+      'Prerequisite(s): FMST 1 and FMST 100; satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to senior feminist studies majors.'
+    expect(parsePrereq(raw)).toEqual({
+      ok: true,
+      ast: { type: 'and', children: [course('FMST 1'), course('FMST 100'), ELWR_C] },
+    })
+  })
+
+  it('ANDs a course list with an ELWR clause after "; and"', () => {
+    const raw =
+      'Prerequisite(s): CRES 10, CRES 100, and CRES 101; and satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to senior critical race and ethnic studies majors.'
+    expect(parsePrereq(raw)).toEqual({
+      ok: true,
+      ast: { type: 'and', children: [course('CRES 10'), course('CRES 100'), course('CRES 101'), ELWR_C] },
+    })
+  })
+
+  it('falls back when an unparseable "Directed Self-Placement" alternative sits in an OR group with ELWR', () => {
+    const raw =
+      'Prerequisite(s): WRIT 1, WRIT 1E, satisfaction of the Entry Level Writing Requirement, or course selection via Directed Self-Placement.'
+    expect(parsePrereq(raw)).toEqual({ ok: false, raw })
+  })
+
+  it('falls back on an ELWR-or-DSP-score alternative it cannot parse', () => {
+    const raw =
+      'Prerequisite(s): satisfaction of the Entry Level Writing Requirement, or Directed Self Placement score of 2. Enrollment is restricted to frosh, sophomore and junior students.'
+    expect(parsePrereq(raw)).toEqual({ ok: false, raw })
+  })
+
+  it('falls back on pure narrative that mentions the ELWR requirement', () => {
+    const raw =
+      'Enrollment is restricted to fourth-quarter students who have not passed the Entry Level Writing Requirement. Open to others by permission of instructor.'
+    expect(parsePrereq(raw)).toEqual({ ok: false, raw })
+  })
+
+  it('falls back rather than dropping "THEA 157 or an equivalent..." and keeping only the ELWR clause', () => {
+    const raw =
+      'Prerequisite(s): THEA 157 or an equivalent from creative writing, and satisfaction of the Entry Level Writing and Composition requirements.'
+    expect(parsePrereq(raw)).toEqual({ ok: false, raw })
+  })
+
+  it('parses the ELWR clause ANDed with an OR group of courses, placement by assessment, and permission (SPAN 6 / SPHS 6)', () => {
+    const raw =
+      'Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements; SPAN 6, or SPHS 6, placement by assessment, or by instructor consent.'
+    expect(parsePrereq(raw)).toEqual({
+      ok: true,
+      ast: {
+        type: 'and',
+        children: [ELWR_C, { type: 'or', children: [course('SPAN 6'), course('SPHS 6'), PLACE, PERM] }],
+      },
+    })
+  })
+
+  it('keeps a leading ELWR clause outside the course OR chain that follows it (EART 100)', () => {
+    const raw =
+      'Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements and EART 5 or EART 10 or EART 20 or BIOE 20C, or ANTH 1. Concurrent enrollment in EART 100L is required.'
+    expect(parsePrereq(raw)).toEqual({
+      ok: true,
+      ast: {
+        type: 'and',
+        children: [
+          ELWR_C,
+          { type: 'or', children: [course('EART 5'), course('EART 10'), course('EART 20'), course('BIOE 20C'), course('ANTH 1')] },
+          { type: 'constraint', detail: 'concurrent enrollment', child: course('EART 100L') },
+        ],
+      },
+    })
+  })
+
+  it('keeps a tight "X and ELWR" so a following "; or permission" replaces both (MUSC 101B)', () => {
+    const raw =
+      'Prerequisite(s): MUSC 30A and satisfaction of the Entry Level Writing and Composition requirements; or by instructor permission.'
+    expect(parsePrereq(raw)).toEqual({
+      ok: true,
+      ast: { type: 'or', children: [{ type: 'and', children: [course('MUSC 30A'), ELWR_C] }, PERM] },
+    })
+  })
+})
+
+describe('parsePrereq — placement by assessment', () => {
+  const PLACE = { type: 'constraint', detail: 'placement by assessment', child: null }
+  const PERM = { type: 'constraint', detail: 'instructor permission', child: null }
+  const ELWR_C = { type: 'constraint', detail: 'Entry Level Writing and Composition requirements', child: null }
+
+  it('parses "SPAN 6 or SPHS 6 or placement by assessment."', () => {
+    const raw = 'Prerequisite(s): SPAN 6 or SPHS 6 or placement by assessment.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('SPAN 6'), course('SPHS 6'), PLACE] } })
+  })
+
+  it('parses "FREN 6 or placement by assessment."', () => {
+    const raw = 'Prerequisite(s): FREN 6 or placement by assessment.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('FREN 6'), PLACE] } })
+  })
+
+  it('parses "CHIN 1, placement by assessment, or instructor permission."', () => {
+    const raw = 'Prerequisite(s): CHIN 1, placement by assessment, or instructor permission.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('CHIN 1'), PLACE, PERM] } })
+  })
+
+  it('parses "CHIN 4 or CHIN 4H or placement by assessment, or by consent of instructor."', () => {
+    const raw = 'Prerequisite(s): CHIN 4 or CHIN 4H or placement by assessment, or by consent of instructor.'
+    expect(parsePrereq(raw)).toEqual({
+      ok: true,
+      ast: { type: 'or', children: [course('CHIN 4'), course('CHIN 4H'), PLACE, PERM] },
+    })
+  })
+
+  it('parses "FREN 6 or placement by assessment." followed by a non-requirement narrative sentence', () => {
+    const raw =
+      'Prerequisite(s): FREN 6 or placement by assessment. Students interested in this course who have not taken the prerequisite should meet with the instructor prior to the first class meeting.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('FREN 6'), PLACE] } })
+  })
+
+  it('parses "FREN 6, or placement by assessment, or by permission of the instructor."', () => {
+    const raw = 'Prerequisite(s): FREN 6, or placement by assessment, or by permission of the instructor.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('FREN 6'), PLACE, PERM] } })
+  })
+
+  it('parses "SPAN 5 or SPAN 5M or placement by assessment."', () => {
+    const raw = 'Prerequisite(s): SPAN 5 or SPAN 5M or placement by assessment.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('SPAN 5'), course('SPAN 5M'), PLACE] } })
+  })
+
+  it('parses "SPAN 6 or SPHS 6 or placement by assessment." followed by an enrollment-restriction sentence', () => {
+    const raw =
+      'Prerequisite(s): SPAN 6 or SPHS 6 or placement by assessment. Enrollment is restricted to Spanish studies majors and minors.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('SPAN 6'), course('SPHS 6'), PLACE] } })
+  })
+
+  it('parses "SPHS 5 or by placement assessment."', () => {
+    const raw = 'Prerequisite(s): SPHS 5 or by placement assessment.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('SPHS 5'), PLACE] } })
+  })
+
+  it('parses "Placement into Spanish 1 via the online Spanish Placement Assessment." as placement alone', () => {
+    const raw = 'Prerequisite(s): Placement into Spanish 1 via the online Spanish Placement Assessment.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: PLACE })
+  })
+
+  it('parses "SPAN 1 or placement into Spanish 2 via the online Spanish Placement Assessment."', () => {
+    const raw = 'Prerequisite(s): SPAN 1 or placement into Spanish 2 via the online Spanish Placement Assessment.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('SPAN 1'), PLACE] } })
+  })
+
+  it('parses "placement assessment; and SPAN 150" as an AND of an OR group and a course', () => {
+    const raw =
+      'Prerequisite(s): SPAN 6 or SPHS 6 or placement assessment; and SPAN 150. Enrollment is restricted to juniors and seniors majoring in Spanish studies, language studies or linguistics.'
+    expect(parsePrereq(raw)).toEqual({
+      ok: true,
+      ast: { type: 'and', children: [{ type: 'or', children: [course('SPAN 6'), course('SPHS 6'), PLACE] }, course('SPAN 150')] },
+    })
+  })
+
+  it('parses "LING 50; and SPAN 6 or SPHS 6 or placement by assessment."', () => {
+    const raw = 'Prerequisite(s): LING 50; and SPAN 6 or SPHS 6 or placement by assessment.'
+    expect(parsePrereq(raw)).toEqual({
+      ok: true,
+      ast: { type: 'and', children: [course('LING 50'), { type: 'or', children: [course('SPAN 6'), course('SPHS 6'), PLACE] }] },
+    })
+  })
+
+  it('parses an ELWR clause ANDed with "SPAN 6 or SPHS 6, or by placement assessment."', () => {
+    const raw =
+      'Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements; SPAN 6 or SPHS 6, or by placement assessment. Enrollment restricted to sophomore, junior, and senior Spanish studies majors.'
+    expect(parsePrereq(raw)).toEqual({
+      ok: true,
+      ast: { type: 'and', children: [ELWR_C, { type: 'or', children: [course('SPAN 6'), course('SPHS 6'), PLACE] }] },
+    })
+  })
+
+  it('parses "JAPN 3 or placement by assessment."', () => {
+    const raw = 'Prerequisite(s): JAPN 3 or placement by assessment.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('JAPN 3'), PLACE] } })
+  })
+
+  it('parses "ITAL 1B or ITAL 3 or placement by assessment."', () => {
+    const raw = 'Prerequisite(s): ITAL 1B or ITAL 3 or placement by assessment.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('ITAL 1B'), course('ITAL 3'), PLACE] } })
+  })
+
+  it('drops a "preferable" advisory clause instead of keeping the course as a hard requirement', () => {
+    const raw =
+      'Prerequisite(s): ITAL 1A or ITAL 2 or placement by assessment. For students completing ITAL 2, ITAL 3 is preferable.'
+    expect(parsePrereq(raw)).toEqual({ ok: true, ast: { type: 'or', children: [course('ITAL 1A'), course('ITAL 2'), PLACE] } })
+  })
+
+  it('falls back on a lowercase "Span 6" rather than guessing a course code', () => {
+    const raw = 'Prerequisite(s): Span 6 or SPHS 6 or placement by assessment.'
+    expect(parsePrereq(raw)).toEqual({ ok: false, raw })
+  })
+
+  it('falls back on "placement by assessment" alongside an unparseable interview-consent clause', () => {
+    const raw = 'Prerequisite(s): FREN 6 or placement by assessment, or by interview with consent of instructor.'
+    expect(parsePrereq(raw)).toEqual({ ok: false, raw })
+  })
+
+  it('falls back on a program-coordinator consent clause mixed with placement by assessment', () => {
+    const raw = 'Prerequisite(s): SPHS 4, by consent of program coordinator, or by placement assessment.'
+    expect(parsePrereq(raw)).toEqual({ ok: false, raw })
+  })
+
+  it('falls back on a writing-sample alternative mixed with placement by assessment', () => {
+    const raw =
+      'Prerequisites: SPAN 6, SPHS 6, or PORT 65B; or placement by assessment, or submission of a writing sample in either Spanish or Portuguese for instructor approval. Course requires language and composition proficiency in Spanish or Portuguese.'
+    expect(parsePrereq(raw)).toEqual({ ok: false, raw })
+  })
+})

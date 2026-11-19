@@ -304,7 +304,8 @@ line.
 position (`sticky` (`/y`) regexes advancing a cursor, not a global scan).
 Order matters a lot — multi-word phrases (`"concurrent enrollment in"`,
 grade-minimum phrases, placement-exam-score phrases, "permission of
-instructor" phrasings) are matched *before* the plain `and`/`or` keyword
+instructor" phrasings, the Entry Level Writing requirement, language
+"placement by assessment") are matched *before* the plain `and`/`or` keyword
 matchers, because those plain matchers would otherwise consume a prefix of
 the longer phrase. Anything unrecognized falls into a catch-all `other`
 token (swallowed, ignorable) rather than aborting tokenization.
@@ -321,6 +322,9 @@ approach:
    and/or keyword, or a bare semicolon/period defaulting to attached-AND) or
    **not attached** (a bare and/or keyword with no adjacent punctuation).
    Attached = outer/looser precedence boundary; not-attached = inner/tighter.
+   One exception: a bare keyword directly *after* the Entry Level Writing
+   token counts as attached, so "ELWR and X or Y, or Z" reads
+   ELWR AND (X or Y or Z) rather than letting Z replace the writing clause.
 2. `buildTiers` groups chunks into tiers at the attached-separator
    boundaries.
 3. `combineByPrecedence` folds a tier's chunks (or the tiers themselves) by
@@ -334,7 +338,10 @@ approach:
    group, a member that fails to parse is simply dropped, since an AND
    group's meaning is unaffected by a branch you can't understand (you just
    know less about one of the independent requirements, not a stronger
-   requirement than reality).
+   requirement than reality). The drop is only allowed while a course
+   survives: a result with **no course node** that dropped a non-empty
+   clause falls back to raw text, so "THEA 157 or an equivalent ..., and
+   the ELWR" never shows up as just the writing requirement.
 5. Two narrative-stripping steps bound how much of the raw string is even
    considered: `LABEL_RE` finds where "Prerequisite(s):" actually starts
    (so leading narrative before the label is never parsed as logic), and
@@ -614,12 +621,12 @@ one small typed message contract (`slugpath:calendar-link` / `-unlink` /
 - **The OAuth client id is build-time config, not a committed credential**:
   `manifest.config.ts` reads `SLUGPATH_OAUTH_CLIENT_ID` (wired to a repo
   secret in `release.yml`) and otherwise ships an obvious
-  `REPLACE_ME.apps.googleusercontent.com`, so an unconfigured build fails
-  loudly at sign-in instead of looking configured. `||` not `??` there: an
-  unset GitHub Actions secret arrives as an empty string. `authToken()`
-  checks for the placeholder itself and throws a message naming
-  `SLUGPATH_OAUTH_CLIENT_ID`, since Chrome's own error is an opaque
-  "invalid_client". The client is a Google Cloud OAuth client of type **"Web
+  `REPLACE_ME.apps.googleusercontent.com`. `||` not `??` there: an
+  unset GitHub Actions secret arrives as an empty string.
+  `googleConfigured()` is the one placeholder check: the export UI and the
+  options page render no Google controls when it returns false, and
+  `authToken()` still throws a message naming `SLUGPATH_OAUTH_CLIENT_ID` if
+  called anyway, since Chrome's own error is an opaque "invalid_client". The client is a Google Cloud OAuth client of type **"Web
   application"** whose authorized redirect URI is
   `https://<extension-id>.chromiumapp.org/`. The manifest has no `key`, so an
   unpacked build's ID comes from its load path: load it from a different
@@ -646,7 +653,7 @@ DOM and no content-script constraints — it's `createRoot` straight into
   `@slugpath/catalog-snapshot/data/version.json`. No major picker (UCSC GEs
   are campus-wide; only DC is per-major, and that data isn't sourced) and no
   year picker (only one catalog is bundled).
-- **Google Calendar**: link status plus link/unlink buttons, which go through
+- **Google Calendar** (only when `googleConfigured()`): link status plus link/unlink buttons, which go through
   the background worker's messages (§4.8) rather than calling
   `chrome.identity` here, even though an extension page could — one owner of
   the token lifecycle.
@@ -852,10 +859,6 @@ is reconciled to that section.
 
 Divergences between §2 and the code that are still true:
 
-- **Google controls are not gated yet.** `options/Options.tsx` always renders
-  `GoogleCalendarSection`, and `schedule/ExportControls.tsx` always renders
-  "Add to Google Calendar". The placeholder client id is refused only at call
-  time in `export/googleCalendar.ts`. §2 requires these hidden (plan T2.1).
 - **No icons.** `manifest.config.ts` declares no `icons` or `default_icon`, and
   `apps/extension/public/` does not exist (plan T3.1).
 - **Deferred in §2 and unwired:** `getCurrentTerm` (`adapters/myucsc.ts`) has no

@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { planToEvents, type CalendarEvent } from '../export/events'
 import { eventsToIcs, icsFilename } from '../export/ics'
+import { googleConfigured } from '../export/googleCalendar'
 import { requestCalendarExport } from '../export/messages'
 import { useSettings } from '../storage/hooks'
 import type { Plan } from '../storage/types'
@@ -28,6 +29,7 @@ export function ExportControls({ plan }: { plan: Plan }) {
   }
   const [busy, setBusy] = useState(false)
   const [retryable, setRetryable] = useState<CalendarEvent[]>([])
+  const googleOk = googleConfigured()
 
   const events = useMemo(() => planToEvents(plan, { start, end }), [plan, start, end])
   const blocker = exportBlocker(plan, start, end, events.length)
@@ -103,10 +105,12 @@ export function ExportControls({ plan }: { plan: Plan }) {
         <button type="button" onClick={handleDownload} disabled={busy} style={buttonStyle}>
           Download .ics
         </button>
-        <button type="button" onClick={handleGoogleExport} disabled={busy} style={buttonStyle}>
-          Add to Google Calendar
-        </button>
-        {retryable.length > 0 && (
+        {googleOk && (
+          <button type="button" onClick={handleGoogleExport} disabled={busy} style={buttonStyle}>
+            Add to Google Calendar
+          </button>
+        )}
+        {googleOk && retryable.length > 0 && (
           <button type="button" onClick={() => void runGoogleExport(retryable)} disabled={busy} style={buttonStyle}>
             Retry {retryable.length} failed
           </button>

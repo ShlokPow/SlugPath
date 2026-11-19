@@ -79,6 +79,11 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
             "code": "ANTH 3",
             "type": "course",
           },
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
         ],
         "type": "and",
       },
@@ -91,6 +96,11 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "result": {
       "ast": {
         "children": [
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
           {
             "code": "ANTH 1",
             "type": "course",
@@ -248,8 +258,12 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "ARTG 170A",
     "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to senior art and design: games and playable media majors.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to senior art and design: games and playable media majors.",
+      "ast": {
+        "child": null,
+        "detail": "Entry Level Writing and Composition requirements",
+        "type": "constraint",
+      },
+      "ok": true,
     },
   },
   {
@@ -382,6 +396,11 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
             "type": "course",
           },
           {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
+          {
             "child": {
               "code": "BIOE 145",
               "type": "course",
@@ -493,6 +512,11 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
             "code": "BIOL 105",
             "type": "course",
           },
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
         ],
         "type": "and",
       },
@@ -557,6 +581,11 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
             ],
             "type": "or",
           },
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
         ],
         "type": "and",
       },
@@ -592,8 +621,18 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "prereqRaw": "Prerequisite(s): BIOL 20A; satisfaction of Entry Level Writing and Composition requirements; Enrollment restricted to junior and senior bioengineering, biomolecular engineering and bioinformatics, and biotechnology majors.",
     "result": {
       "ast": {
-        "code": "BIOL 20A",
-        "type": "course",
+        "children": [
+          {
+            "code": "BIOL 20A",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
+        ],
+        "type": "and",
       },
       "ok": true,
     },
@@ -641,8 +680,30 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "CHIN 6",
     "prereqRaw": "Prerequisite(s): CHIN 5 or CHIN 5H or placement by assessment, or by consent of instructor.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): CHIN 5 or CHIN 5H or placement by assessment, or by consent of instructor.",
+      "ast": {
+        "children": [
+          {
+            "code": "CHIN 5",
+            "type": "course",
+          },
+          {
+            "code": "CHIN 5H",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "placement by assessment",
+            "type": "constraint",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
     },
   },
   {
@@ -685,6 +746,11 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
           {
             "code": "CRES 100",
             "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
           },
         ],
         "type": "and",
@@ -939,6 +1005,11 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
       "ast": {
         "children": [
           {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
+          {
             "children": [
               {
                 "code": "EART 5",
@@ -1146,6 +1217,11 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "result": {
       "ast": {
         "children": [
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
           {
             "children": [
               {
@@ -1425,8 +1501,18 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "prereqRaw": "Prerequisite(s): FILM 20A, satisfaction of the Entry Level Writing and Composition requirements.",
     "result": {
       "ast": {
-        "code": "FILM 20A",
-        "type": "course",
+        "children": [
+          {
+            "code": "FILM 20A",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
+        ],
+        "type": "and",
       },
       "ok": true,
     },
@@ -1512,6 +1598,11 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
             "code": "FMST 100",
             "type": "course",
           },
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
         ],
         "type": "and",
       },
@@ -1530,8 +1621,21 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "FREN 114",
     "prereqRaw": "Prerequisite(s): FREN 6 or placement by assessment.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): FREN 6 or placement by assessment.",
+      "ast": {
+        "children": [
+          {
+            "code": "FREN 6",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "placement by assessment",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
     },
   },
   {
@@ -1636,8 +1740,18 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements, HIS 100, and two upper-division history courses, or permission of instructor. Enrollment is restricted to junior and senior history majors.",
     "result": {
       "ast": {
-        "code": "HIS 100",
-        "type": "course",
+        "children": [
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
+          {
+            "code": "HIS 100",
+            "type": "course",
+          },
+        ],
+        "type": "and",
       },
       "ok": true,
     },
@@ -1647,8 +1761,18 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "prereqRaw": "Prerequisite(s): Satisfaction of the Entry Level Writing and Composition requirements, HIS 100 (for history majors), and two additional upper-division history courses. Enrollment is restricted to junior and senior history and Jewish studies majors.",
     "result": {
       "ast": {
-        "code": "HIS 100",
-        "type": "course",
+        "children": [
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
+          {
+            "code": "HIS 100",
+            "type": "course",
+          },
+        ],
+        "type": "and",
       },
       "ok": true,
     },
@@ -1681,8 +1805,21 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "JAPN 103",
     "prereqRaw": "Prerequisite(s): JAPN 6 or placement by assessment.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): JAPN 6 or placement by assessment.",
+      "ast": {
+        "children": [
+          {
+            "code": "JAPN 6",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "placement by assessment",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
     },
   },
   {
@@ -1720,16 +1857,24 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "POLI 105B",
     "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
+      "ast": {
+        "child": null,
+        "detail": "Entry Level Writing and Composition requirements",
+        "type": "constraint",
+      },
+      "ok": true,
     },
   },
   {
     "code": "LING 112",
     "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
+      "ast": {
+        "child": null,
+        "detail": "Entry Level Writing and Composition requirements",
+        "type": "constraint",
+      },
+      "ok": true,
     },
   },
   {
@@ -1785,8 +1930,12 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "LIT 184E",
     "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements.",
+      "ast": {
+        "child": null,
+        "detail": "Entry Level Writing and Composition requirements",
+        "type": "constraint",
+      },
+      "ok": true,
     },
   },
   {
@@ -1886,8 +2035,22 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "MUSC 105A",
     "prereqRaw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements; or by permission of the instructor.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): satisfaction of the Entry Level Writing and Composition requirements; or by permission of the instructor.",
+      "ast": {
+        "children": [
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
     },
   },
   {
@@ -2156,8 +2319,18 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "prereqRaw": "Prerequisite(s): PSYC 100 and satisfaction of the Entry Level Writing and Composition requirements. Enrollment is restricted to senior psychology and cognitive science majors.",
     "result": {
       "ast": {
-        "code": "PSYC 100",
-        "type": "course",
+        "children": [
+          {
+            "code": "PSYC 100",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "Entry Level Writing and Composition requirements",
+            "type": "constraint",
+          },
+        ],
+        "type": "and",
       },
       "ok": true,
     },
@@ -2326,8 +2499,25 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "SPAN 4",
     "prereqRaw": "Prerequisite(s): SPAN 1B or SPAN 3 or placement by assessment.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): SPAN 1B or SPAN 3 or placement by assessment.",
+      "ast": {
+        "children": [
+          {
+            "code": "SPAN 1B",
+            "type": "course",
+          },
+          {
+            "code": "SPAN 3",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "placement by assessment",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
     },
   },
   {

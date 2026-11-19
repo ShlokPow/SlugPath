@@ -281,12 +281,12 @@ Owner key: **O** = Opus, **K** = Haiku worker, **H** = human.
 - [x] **Wave 1 integration gate (O).** Full check suite green on the combined branch before the PR.
 
 ### Wave 2 — serial
-- [ ] **T2.1 (K) Hide Google controls without a real client id.** *Depends:* T1.3. *Files:*
+- [x] **T2.1 (K) Hide Google controls without a real client id.** *Depends:* T1.3. *Files:*
   `schedule/ExportControls.tsx`, `options/Options.tsx`, `export/googleCalendar.ts` (export the
   existing placeholder check; do not duplicate it). When the built-in client id is the
   `REPLACE_ME` placeholder, render no Google button and no link/unlink section. `.ics` unaffected.
   *Verify:* existing export tests + one new test for the hidden state.
-- [ ] **T2.2 (O designs, K implements) Parser coverage batches.** *Depends:* T1.5. Repeat:
+- [x] **T2.2 (O designs, K implements) Parser coverage batches.** *Depends:* T1.5. Repeat:
   1. Opus runs `coverage:prereq`, picks **one** failure pattern, pulls 10–20 real strings for it
      from the snapshot and writes the expected ASTs. Skip any pattern that is not a real
      prerequisite (anti-requisites like "cannot receive credit for", enrollment restrictions).
@@ -297,7 +297,7 @@ Owner key: **O** = Opus, **K** = Haiku worker, **H** = human.
 
   **Stop rule:** stop at ≥70% parsed, or after 4 batches, or when the top remaining pattern
   covers <40 courses — whichever comes first. Record the final number in §9.
-- [ ] **Wave 2 integration gate (O).** Full check suite green on the combined branch before the PR.
+- [x] **Wave 2 integration gate (O).** Full check suite green on the combined branch before the PR.
 
 ### Wave 3 — as human gates clear
 - [ ] **T3.1 (K) Wire icons.** *Depends:* H4. *Files:* `manifest.config.ts`, files under
@@ -362,7 +362,7 @@ _None._
 ### Metrics (no telemetry required)
 | Metric | How measured | Target |
 |---|---|---|
-| Prereq parse rate | `coverage:prereq` on the bundled snapshot | ≥70% or stop rule; record actual: ____ |
+| Prereq parse rate | `coverage:prereq` on the bundled snapshot | ≥70% or stop rule; record actual: **1814/3381 (53.7%)** after 2 batches (stop rule: top remaining non-restriction pattern covers 3 courses; 1417 of the 1567 failures are enrollment restrictions) |
 | Adapter correctness | Verbatim-capture fixture tests | 100% of captured rows parse |
 | Export correctness | `.ics` round-tripped through an independent parser | All checks pass |
 | Live smoke | §9 checklist run by the owner on real MyUCSC | All items pass before each release |

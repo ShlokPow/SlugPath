@@ -95,7 +95,12 @@ function splitChunks(tokens: Token[], start: number, end: number): { chunks: Ran
       let sep: Sep
       let next = i + 1
       if (t.type === 'and' || t.type === 'or') {
-        sep = { type: t.type, attached: false }
+        // A leading writing requirement is a whole clause, not a member of the course
+        // list after it: "ELWR and X or Y, or Z" is ELWR AND (X or Y or Z), not
+        // (ELWR and X or Y) or Z. Only the keyword right after it is promoted; "X and
+        // ELWR; or permission" keeps its tight "and" so permission still replaces both.
+        const afterClause = tokens[i - 1]?.type === 'entryLevelWriting'
+        sep = { type: t.type, attached: afterClause }
       } else {
         const following = tokens[i + 1]
         if (following && (following.type === 'and' || following.type === 'or')) {
@@ -199,7 +204,7 @@ function findMatchingRParen(tokens: Token[], lparenIdx: number, end: number): nu
 // shows up in a chunk's leftover, we can't safely tolerate it as ignorable filler
 // (unlike e.g. "proficiency") — silently keeping the course as a hard requirement
 // would misrepresent a recommendation as mandatory, which is worse than failing.
-const SOFT_QUALIFIER_RE = /^(?:recommended|suggested|preferred|encouraged|optional)$/i
+const SOFT_QUALIFIER_RE = /^(?:recommended|suggested|preferred|preferable|encouraged|optional)$/i
 
 function chunkHasUnsafeTrailing(tokens: Token[], start: number, end: number): boolean {
   for (let i = start; i < end; i++) {
@@ -227,8 +232,17 @@ function parseLeadingAtom(tokens: Token[], idx: number, end: number): { node: Pr
     return { node: { type: 'constraint', detail: 'instructor permission', child: null }, next: idx + 1 }
   }
 
+  if (t.type === 'entryLevelWriting') {
+    const detail = t.value ? 'Entry Level Writing and Composition requirements' : 'Entry Level Writing requirement'
+    return { node: { type: 'constraint', detail, child: null }, next: idx + 1 }
+  }
+
   if (t.type === 'placementScore') {
     return { node: { type: 'constraint', detail: `placement exam score ${t.value}+`, child: null }, next: idx + 1 }
+  }
+
+  if (t.type === 'placementAssessment') {
+    return { node: { type: 'constraint', detail: 'placement by assessment', child: null }, next: idx + 1 }
   }
 
   if (t.type === 'concurrent') {
@@ -277,12 +291,28 @@ function parseLeadingAtom(tokens: Token[], idx: number, end: number): { node: Pr
  * meant to be part of the requirement, so the whole chunk fails instead of silently
  * dropping a course.
  */
-function parseAtomChunk(tokens: Token[], start: number, end: number): PrereqNode | null {
+function parseAtomChunkNode(tokens: Token[], start: number, end: number): PrereqNode | null {
   const lead = parseLeadingAtom(tokens, start, end)
   if (!lead) return null
   if (lead.next >= end) return lead.node
   if (chunkHasUnsafeTrailing(tokens, lead.next, end)) return null
   return lead.node
+}
+
+// Set when a non-empty chunk fails to parse during the current parsePrereq call.
+// Read by the never-guess guard there. Empty chunks (a trailing period) don't count.
+let droppedChunk = false
+
+function parseAtomChunk(tokens: Token[], start: number, end: number): PrereqNode | null {
+  const node = parseAtomChunkNode(tokens, start, end)
+  if (node === null && start < end) droppedChunk = true
+  return node
+}
+
+function hasCourse(node: PrereqNode): boolean {
+  if (node.type === 'course') return true
+  if (node.type === 'constraint') return node.child !== null && hasCourse(node.child)
+  return node.children.some(hasCourse)
 }
 
 interface Tier {
@@ -341,7 +371,12 @@ export function parsePrereq(raw: string): ParsePrereqResult {
   if (boundary) candidate = candidate.slice(0, boundary.index)
 
   const tokens = tokenize(candidate)
+  droppedChunk = false
   const ast = parseExpr(tokens, 0, tokens.length)
   if (ast === null) return { ok: false, raw }
+  // ponytail: a result with no course node that silently lost a clause (e.g. "THEA 157 or
+  // an equivalent..., and satisfaction of the ELWR") would claim a requirement it can't
+  // back up, so fall back. Results with a course node keep the drop behaviour.
+  if (droppedChunk && !hasCourse(ast)) return { ok: false, raw }
   return { ok: true, ast }
 }

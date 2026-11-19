@@ -23,9 +23,20 @@ removed, release workflow publishes to a GitHub Release with a tag check,
 `coverage:prereq` report (baseline 1675/3381, 49.5%), `SlugPath.md` and
 ARCHITECTURE §9 reconciled, `docs/store-listing.md` drafted and the privacy
 policy corrected from its mismatch list.
+Wave 2: T2.1 hides the Google Calendar controls (export panel and options)
+in builds without a real OAuth client id, via `googleConfigured()`.
+T2.2 ran two parser batches (Entry Level Writing requirement, language
+placement by assessment): 1675 -> 1814 of 3381 (53.7%), then hit the stop
+rule. 1417 of the remaining 1567 failures are enrollment restrictions, not
+prerequisites.
 
 ### Gotchas hit this session (don't rediscover these)
 
+- **Check parser batches against the whole snapshot, not the 150-string
+  fixture sample.** Dump `parsePrereq` for every course before and after,
+  keyed by array index (course codes repeat: 3381 strings, ~3288 codes), and
+  diff the ASTs. That caught EART 100, where a new token flipped precedence so
+  ANTH 1 alone looked sufficient; the sample snapshot never contained it.
 - **`node scripts/*.ts` needs `--experimental-strip-types` on this
   machine's Node 22.16** (default-on only from 22.18/23.6), and Node never
   resolves extensionless relative imports or `@slugpath/*` from the repo
