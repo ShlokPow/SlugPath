@@ -281,7 +281,7 @@ Owner key: **O** = Opus, **K** = Haiku worker, **H** = human.
 - [x] **Wave 1 integration gate (O).** Full check suite green on the combined branch before the PR.
 
 ### Wave 2 — serial
-- [ ] **T2.1 (K) Hide Google controls without a real client id.** *Depends:* T1.3. *Files:*
+- [x] **T2.1 (K) Hide Google controls without a real client id.** *Depends:* T1.3. *Files:*
   `schedule/ExportControls.tsx`, `options/Options.tsx`, `export/googleCalendar.ts` (export the
   existing placeholder check; do not duplicate it). When the built-in client id is the
   `REPLACE_ME` placeholder, render no Google button and no link/unlink section. `.ics` unaffected.

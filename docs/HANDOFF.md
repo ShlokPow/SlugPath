@@ -23,6 +23,8 @@ removed, release workflow publishes to a GitHub Release with a tag check,
 `coverage:prereq` report (baseline 1675/3381, 49.5%), `SlugPath.md` and
 ARCHITECTURE §9 reconciled, `docs/store-listing.md` drafted and the privacy
 policy corrected from its mismatch list.
+Wave 2: T2.1 hides the Google Calendar controls (export panel and options)
+in builds without a real OAuth client id, via `googleConfigured()`.
 
 ### Gotchas hit this session (don't rediscover these)
 
