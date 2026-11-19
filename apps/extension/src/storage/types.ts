@@ -1,5 +1,7 @@
+export type Day = 'M' | 'T' | 'W' | 'Th' | 'F' | 'Sa' | 'Su'
+
 export interface MeetingPattern {
-  days: string[]
+  days: Day[]
   startMinute: number
   endMinute: number
   location: string

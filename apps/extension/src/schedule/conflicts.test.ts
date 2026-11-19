@@ -22,12 +22,12 @@ describe('sectionsConflict', () => {
     const a = section({
       courseCode: 'CSE101',
       sectionNumber: '01',
-      meetingPattern: [{ days: ['Mon'], startMinute: 600, endMinute: 660, location: 'X' }],
+      meetingPattern: [{ days: ['M'], startMinute: 600, endMinute: 660, location: 'X' }],
     })
     const b = section({
       courseCode: 'CSE102',
       sectionNumber: '01',
-      meetingPattern: [{ days: ['Mon'], startMinute: 630, endMinute: 690, location: 'Y' }],
+      meetingPattern: [{ days: ['M'], startMinute: 630, endMinute: 690, location: 'Y' }],
     })
     expect(sectionsConflict(a, b)).toBe(true)
   })
@@ -36,12 +36,12 @@ describe('sectionsConflict', () => {
     const a = section({
       courseCode: 'CSE101',
       sectionNumber: '01',
-      meetingPattern: [{ days: ['Mon'], startMinute: 600, endMinute: 660, location: 'X' }],
+      meetingPattern: [{ days: ['M'], startMinute: 600, endMinute: 660, location: 'X' }],
     })
     const b = section({
       courseCode: 'CSE102',
       sectionNumber: '01',
-      meetingPattern: [{ days: ['Mon'], startMinute: 660, endMinute: 720, location: 'Y' }],
+      meetingPattern: [{ days: ['M'], startMinute: 660, endMinute: 720, location: 'Y' }],
     })
     expect(sectionsConflict(a, b)).toBe(false)
   })
@@ -50,12 +50,12 @@ describe('sectionsConflict', () => {
     const a = section({
       courseCode: 'CSE101',
       sectionNumber: '01',
-      meetingPattern: [{ days: ['Mon'], startMinute: 600, endMinute: 660, location: 'X' }],
+      meetingPattern: [{ days: ['M'], startMinute: 600, endMinute: 660, location: 'X' }],
     })
     const b = section({
       courseCode: 'CSE102',
       sectionNumber: '01',
-      meetingPattern: [{ days: ['Tue'], startMinute: 600, endMinute: 660, location: 'Y' }],
+      meetingPattern: [{ days: ['T'], startMinute: 600, endMinute: 660, location: 'Y' }],
     })
     expect(sectionsConflict(a, b)).toBe(false)
   })
@@ -64,13 +64,13 @@ describe('sectionsConflict', () => {
     const a = section({
       courseCode: 'CSE101',
       sectionNumber: '01',
-      meetingPattern: [{ days: ['Mon'], startMinute: 600, endMinute: 660, location: 'X' }],
+      meetingPattern: [{ days: ['M'], startMinute: 600, endMinute: 660, location: 'X' }],
       linkedSectionKeys: ['CSE101L 01'],
     })
     const b = section({
       courseCode: 'CSE101L',
       sectionNumber: '01',
-      meetingPattern: [{ days: ['Mon'], startMinute: 600, endMinute: 660, location: 'Y' }],
+      meetingPattern: [{ days: ['M'], startMinute: 600, endMinute: 660, location: 'Y' }],
     })
     expect(sectionsConflict(a, b)).toBe(false)
   })
@@ -81,17 +81,17 @@ describe('findConflicts', () => {
     const a = section({
       courseCode: 'CSE101',
       sectionNumber: '01',
-      meetingPattern: [{ days: ['Mon'], startMinute: 600, endMinute: 660, location: 'X' }],
+      meetingPattern: [{ days: ['M'], startMinute: 600, endMinute: 660, location: 'X' }],
     })
     const b = section({
       courseCode: 'CSE102',
       sectionNumber: '01',
-      meetingPattern: [{ days: ['Mon'], startMinute: 630, endMinute: 690, location: 'Y' }],
+      meetingPattern: [{ days: ['M'], startMinute: 630, endMinute: 690, location: 'Y' }],
     })
     const c = section({
       courseCode: 'CSE103',
       sectionNumber: '01',
-      meetingPattern: [{ days: ['Wed'], startMinute: 900, endMinute: 960, location: 'Z' }],
+      meetingPattern: [{ days: ['W'], startMinute: 900, endMinute: 960, location: 'Z' }],
     })
 
     const conflicts = findConflicts([a, b, c])

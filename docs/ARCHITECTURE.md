@@ -134,6 +134,8 @@ Everything persisted lives in **`chrome.storage.local`**:
   `clear`) so call sites stay one-liners.
 - `settingsStore.ts` — the single small settings blob (`majorCode`,
   `catalogYear`, `calendarLinked`, `defaultTerm`, `activePlanId`, ...).
+  `majorCode` and `catalogYear` stay in the type, but no UI writes them since
+  the options-page pickers were removed.
 
 **Why not IndexedDB:** a content script's IndexedDB belongs to the *host
 page's* origin, not the extension's. SlugPath's content script runs in the
@@ -240,7 +242,9 @@ guessing at a mechanism.
 
 ### 4.3 Schedule builder (`src/schedule/`, `src/storage/planStore.ts`)
 
-**Day codes** are the adapter's (`myucsc.ts`): `M`, `T`, `W`, `Th`, `F`.
+**Day codes** are the adapter's (`myucsc.ts`): `M`, `T`, `W`, `Th`, `F`
+(plus `Sa`/`Su`), typed as the `Day` union in `storage/types.ts`, so a
+`'Mon'`-style code is a compile error rather than a silently empty grid.
 Everything downstream (conflicts, the panel's weekly grid, calendar export)
 compares against those codes. The grid's `DAYS` pairs each code with its
 column label ("Tue" ↔ `T`), so a label is never used as a code.
@@ -638,11 +642,10 @@ A plain extension page (not a content script), so it renders with no shadow
 DOM and no content-script constraints — it's `createRoot` straight into
 `#root` the same as any ordinary Vite+React app. Three sections:
 
-- **Degree**: a major picker (hardcoded three-item list) and a catalog-year
-  picker (hardcoded one-item list, since only one catalog snapshot is
-  bundled), both writing straight to `useSettings()`. Both lists are
-  explicitly marked as placeholders — the major list pending a catalog-driven
-  list, the year list pending a second bundled catalog year to choose between.
+- **Catalog**: the bundled catalog year as plain text, read from
+  `@slugpath/catalog-snapshot/data/version.json`. No major picker (UCSC GEs
+  are campus-wide; only DC is per-major, and that data isn't sourced) and no
+  year picker (only one catalog is bundled).
 - **Google Calendar**: link status plus link/unlink buttons, which go through
   the background worker's messages (§4.8) rather than calling
   `chrome.identity` here, even though an extension page could — one owner of
@@ -746,9 +749,11 @@ Nothing elaborate, but two rules hold across every surface:
   each context's actual global scope is what gets linted against.
 - **CI** (`.github/workflows/ci.yml`): lint → typecheck → test on every PR
   and on push to `main`. No build/package step in CI.
-- **Release** (`.github/workflows/release.yml`): on a `v*` tag, builds and
-  zips `apps/extension/dist` as a release artifact — no Chrome Web Store
-  publish automation yet, just the artifact. The build step passes
+- **Release** (`.github/workflows/release.yml`): on a `v*` tag, fails unless
+  the tag is `v` + `apps/extension/package.json`'s version, then builds, zips
+  `apps/extension/dist` and attaches the zip to a GitHub Release
+  (`gh release create --generate-notes`), which doesn't expire the way a
+  workflow artifact does. No Chrome Web Store publish automation. The build step passes
   `SLUGPATH_OAUTH_CLIENT_ID` (a repo secret) through to the manifest (§4.8);
   without it the zip still builds, with calendar export non-functional.
 
@@ -842,35 +847,28 @@ there a graph view":
 
 ## 9. Where current code diverges from `V1_FEATURES_AND_TECH.md`
 
-The spec document is the original plan; it is **not** kept in sync with
-implementation and shouldn't be read as current state. As of this writing:
+Scope source of truth: `V1_FEATURES_AND_TECH.md` §2 ("v1 scope (settled)"). `SlugPath.md`
+is reconciled to that section.
 
-- **Not implemented yet:** catalog-driven major list (the options page major
-  picker is a hardcoded 3-item placeholder), catalog-page GE badges (deferred
-  — would need a new `catalog.ucsc.edu` adapter built from scratch, since that
-  adapter was deleted along with the prereq graph, §8), per-major DC course
-  data (`DC_COURSES_BY_MAJOR` ships empty, §4.7), and the extension's icon
-  set / Web Store screenshots (design assets, not code — `manifest.config.ts`
-  still declares no `icons`, and the store requires at least a 128px one).
-- **Partially implemented:** the catalog-year picker (§4.9) exists but is a
-  one-item placeholder, since only one catalog snapshot (2026-2027) is
-  bundled — there's nothing real to pick between yet.
-- **Implemented differently from the spec's sketch:** calendar export (§4.8)
-  ships without the `ics` npm package, without bundled academic-calendar
-  dates, and with `COUNT` rather than `UNTIL` — see §7's table for each
-  reason.
-- **Built, then removed:** the React Flow + `dagre` prerequisite graph (see
-  §8) — the spec still describes it as a planned v1 feature; it was replaced
-  by the narrower prereq popover.
-- **Never added:** Tailwind CSS and `lucide-react`, despite being named in
-  the tech stack — there's no styling framework in use; all injected UI uses
-  inline `style` objects.
-- **No catalog cache** — the "on-demand fetch for a course not in the
-  bundled snapshot" behavior the spec describes isn't implemented; only the
-  bundled snapshot is consulted.
-- **`getCurrentTerm`** exists in the MyUCSC adapter but has no caller yet —
-  i.e., `defaultTerm`/term-scoping behavior described in the spec isn't wired
-  up end-to-end.
+Divergences between §2 and the code that are still true:
+
+- **Google controls are not gated yet.** `options/Options.tsx` always renders
+  `GoogleCalendarSection`, and `schedule/ExportControls.tsx` always renders
+  "Add to Google Calendar". The placeholder client id is refused only at call
+  time in `export/googleCalendar.ts`. §2 requires these hidden (plan T2.1).
+- **No icons.** `manifest.config.ts` declares no `icons` or `default_icon`, and
+  `apps/extension/public/` does not exist (plan T3.1).
+- **Deferred in §2 and unwired:** `getCurrentTerm` (`adapters/myucsc.ts`) has no
+  production caller, and nothing assigns `linkedSectionKeys` outside tests (§10).
+- **Per-major DC data is empty:** `DC_COURSES_BY_MAJOR` in
+  `packages/catalog-snapshot/src/geRequirements.ts` is `{}`. §2 defers it.
+- **Misleading path name:** the popover lives in `apps/extension/src/prereq-graph/`
+  (`PrereqPopover.tsx`), although no graph exists.
+
+Everything else in §2 matches the code: `chrome.storage.local` storage with no
+Dexie or IndexedDB, a bundled catalog snapshot with no network fetch (the bundled file is read via `chrome.runtime.getURL`), Google
+auth via `chrome.identity.launchWebAuthFlow`, `.ics` download as the export
+path, no PNG export, no content script on `catalog.ucsc.edu`, and no telemetry.
 
 ## 10. Open/known issues as of this writing
 
@@ -915,6 +913,7 @@ pnpm build:catalog   # re-scrape catalog.ucsc.edu, regenerate the bundled snapsh
 pnpm lint            # eslint .
 pnpm typecheck       # per-package tsc --noEmit + scripts/tsconfig.json
 pnpm test            # vitest run, whole workspace
+pnpm coverage:prereq # parse rate of every bundled prereqRaw + top 30 failure patterns
 ```
 
 Loading the built extension: `chrome://extensions` → Developer mode → Load

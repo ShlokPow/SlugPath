@@ -5,6 +5,8 @@ on:
 jobs:
   build-zip:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -12,6 +14,8 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - name: Check tag matches package version
+        run: test "${{ github.ref_name }}" = "v$(node -p "require('./apps/extension/package.json').version")"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
         # Google Calendar export's OAuth client id (manifest.config.ts). A
@@ -20,7 +24,6 @@ jobs:
         env:
           SLUGPATH_OAUTH_CLIENT_ID: ${{ secrets.SLUGPATH_OAUTH_CLIENT_ID }}
       - run: cd apps/extension/dist && zip -r ../../../slugpath-extension-${{ github.ref_name }}.zip .
-      - uses: actions/upload-artifact@v4
-        with:
-          name: slugpath-extension-${{ github.ref_name }}
-          path: slugpath-extension-${{ github.ref_name }}.zip
+      - run: gh release create "${{ github.ref_name }}" slugpath-extension-${{ github.ref_name }}.zip --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

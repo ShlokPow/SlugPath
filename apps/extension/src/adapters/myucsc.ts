@@ -12,7 +12,7 @@
 // PeopleSoft-classic `<tr>`/`RECORDNAME_FIELDNAME$n` markup that doesn't
 // exist on the current site at all.
 
-import type { MeetingPattern, Section } from '../storage/types'
+import type { Day, MeetingPattern, Section } from '../storage/types'
 
 // Day-code convention used everywhere in this file (and expected by the
 // conflict detector that will consume `MeetingPattern.days`): single letters
@@ -20,7 +20,7 @@ import type { MeetingPattern, Section } from '../storage/types'
 // is already taken by Tuesday). MyUCSC renders combined strings like "MWF"
 // or "TTh"/"TuTh"; both raw spellings of Tuesday are accepted below and
 // normalized to 'T'.
-const DAY_TOKENS: ReadonlyArray<readonly [raw: string, code: string]> = [
+const DAY_TOKENS: ReadonlyArray<readonly [raw: string, code: Day]> = [
   ['Th', 'Th'],
   ['Tu', 'T'],
   ['Su', 'Su'],
@@ -31,8 +31,8 @@ const DAY_TOKENS: ReadonlyArray<readonly [raw: string, code: string]> = [
   ['F', 'F'],
 ]
 
-function parseDays(raw: string): string[] {
-  const days: string[] = []
+function parseDays(raw: string): Day[] {
+  const days: Day[] = []
   let i = 0
   while (i < raw.length) {
     const token = DAY_TOKENS.find(([r]) => raw.startsWith(r, i))

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { planToEvents, toRfc3339 } from './events'
-import type { Plan, Section } from '../storage/types'
+import type { Day, Plan, Section } from '../storage/types'
 
 function plan(sections: Section[]): Plan {
   return { id: 'p1', name: 'Fall', term: 'Fall 2026', sections, createdAt: 0, updatedAt: 0 }
@@ -48,7 +48,7 @@ describe('planToEvents', () => {
   })
 
   it('skips day codes it does not recognize', () => {
-    const bogus: Section = { ...mwfLecture, meetingPattern: [{ days: ['Q'], startMinute: 600, endMinute: 660, location: '' }] }
+    const bogus: Section = { ...mwfLecture, meetingPattern: [{ days: ['Q' as Day], startMinute: 600, endMinute: 660, location: '' }] }
     expect(planToEvents(plan([bogus]), range)).toEqual([])
   })
 

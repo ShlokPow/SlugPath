@@ -26,7 +26,8 @@ _Rewritten 2026-11-16 against the repo at `163f29c` plus the uncommitted working
 | 7 Polish | Code done | Icons, screenshots, policy hosting |
 | 8 Release | Not started | Everything in §7 Wave 4 |
 
-**The entire working tree since `163f29c` is uncommitted.** That is T0.1 and blocks everything.
+The working tree since `163f29c` was committed as one commit (`2525512`, pushed to `main`) rather
+than the planned split; T0.1 is done. Work continues on `release/v1-prep`.
 
 ---
 
@@ -84,7 +85,7 @@ shadow-DOM mounts with inline styles, Vitest + happy-dom. Packages: `apps/extens
 | F8 | Day codes are `string[]`; the grid bug (`'Mon'` vs `'M'`) was invisible to the compiler and `conflicts.test.ts` still uses fake codes. | `Day` union type so the mismatch is a type error. | T1.2 |
 | F9 | Privacy policy "hosted on GitHub Pages from `docs/`" would publish `HANDOFF.md` and `ARCHITECTURE.md` too. | Link the policy file's public GitHub URL, or publish only that file. | D3, H3 |
 | F10 | Unpacked extension ID depends on the load folder and differs from the store ID; the OAuth redirect URI depends on the ID. Unplanned. | Always load from `apps/extension/dist` at the same path; register both dev and store redirect URIs on the one client. | H1, H7 |
-| F11 | A month of work sits uncommitted on `main`. | Commit first. | T0.1 |
+| F11 | A month of work sat uncommitted on `main`. | Committed as `2525512` (one commit, not split; history is not rewritten). | T0.1 |
 | F12 | Store submission needs written permission justifications and listing copy; not in the plan. | Draft them in-repo. | T1.7 |
 | F13 | Version is `0.0.1`; nothing says when it becomes `1.0.0`, or that the tag must match. | Bump at release; CI checks tag = package version. | T1.4, T4.1 |
 
@@ -236,48 +237,48 @@ Human gates have no code dependency: **send the §8 asks to the owner on day one
 Owner key: **O** = Opus, **K** = Haiku worker, **H** = human.
 
 ### Wave 0 — make the tree safe
-- [ ] **T0.1 (O) Commit the working tree.** Run the check suite first. Delete
+- [x] **T0.1 (O) Commit the working tree.** Run the check suite first. Delete
   `docs/add-to-plan-bug.md` (HANDOFF marks it a wrong diagnosis). Split into logical commits:
   storage move off Dexie · export (`src/export/`, `ExportControls.tsx`) · Phase 7 hardening
   (`layoutWarning.ts`, a11y, `takenCourseStore.ts`) · live-testing fixes (`WeeklyGrid`) · docs.
   Then create `release/v1-prep`. *Done when:* `git status` clean, suite green.
-- [ ] **Wave 0 integration gate (O).** Full check suite green on `release/v1-prep`.
+- [x] **Wave 0 integration gate (O).** Full check suite green on `release/v1-prep`.
 
 ### Wave 1 — parallel, disjoint files
-- [ ] **T1.1 (K) Narrow host permissions.** *Files:* `apps/extension/manifest.config.ts`.
+- [x] **T1.1 (K) Narrow host permissions.** *Files:* `apps/extension/manifest.config.ts`.
   Set `host_permissions` to `['https://www.googleapis.com/calendar/*']`. Leave `content_scripts`
   untouched (single entry is load-bearing; see the comment there). *Verify:* build, then
   `dist/manifest.json` shows the one host. *Follow-up:* H3 live check that row buttons still inject.
-- [ ] **T1.2 (K) Typed day codes.** *Files:* `apps/extension/src/storage/types.ts`,
+- [x] **T1.2 (K) Typed day codes.** *Files:* `apps/extension/src/storage/types.ts`,
   `adapters/myucsc.ts`, `schedule/SchedulePanel.tsx`, `schedule/conflicts.test.ts`, plus any file
   `tsc` then flags (report them). Add `export type Day` as the union of exactly the codes
   `parseDays` emits; type `MeetingPattern.days: Day[]`; replace `'Mon'`-style codes in tests with
   real ones. *Do not* change stored data or add a migration (same strings). *Verify:* tsc + the
   touched test files.
-- [ ] **T1.3 (K) Remove placeholder pickers.** *Files:* `apps/extension/src/options/Options.tsx`.
+- [x] **T1.3 (K) Remove placeholder pickers.** *Files:* `apps/extension/src/options/Options.tsx`.
   Delete `MAJORS` and the major `<select>`; replace the catalog-year `<select>` with text showing
   the bundled catalog version. Keep `Settings` fields. If `GETrackerPage.tsx` reads `majorCode`
   for anything user-visible, report it instead of editing.
-- [ ] **T1.4 (K) Release workflow.** *Files:* `.github/workflows/release.yml`. Add a step failing
+- [x] **T1.4 (K) Release workflow.** *Files:* `.github/workflows/release.yml`. Add a step failing
   the job when `github.ref_name` ≠ `v` + `apps/extension/package.json` version; replace
   `upload-artifact` with `gh release create "$TAG" <zip> --generate-notes` (`permissions:
   contents: write`, `GH_TOKEN: ${{ github.token }}`). *Verify:* YAML parses; Opus reviews by reading.
-- [ ] **T1.5 (K) Parser coverage report.** *Files:* new `scripts/prereq-coverage.ts`, root
+- [x] **T1.5 (K) Parser coverage report.** *Files:* new `scripts/prereq-coverage.ts`, root
   `package.json` (add script `coverage:prereq`). Load the bundled snapshot through
   `@slugpath/catalog-snapshot`, run `parsePrereq` on every non-empty `prereqRaw`, print
   parsed/total/percent and the 30 most common failing strings normalised by replacing course
   codes with `X` and numbers with `N`. No test needed; it is a report. *Verify:* runs and prints.
-- [ ] **T1.6 (K) Reconcile docs.** *Files:* `SlugPath.md`, `docs/ARCHITECTURE.md` §9 only.
+- [x] **T1.6 (K) Reconcile docs.** *Files:* `SlugPath.md`, `docs/ARCHITECTURE.md` §9 only.
   Rewrite `SlugPath.md` sections that contradict §2 of this file (graph, catalog pages, Dexie,
   on-demand fetch, `getAuthToken`, PNG export, permissions list, KPIs) to match §2 and §9.
   Replace ARCHITECTURE §9 with a pointer to §2 here plus any divergence still true.
   *Doc claim check applies.*
-- [ ] **T1.7 (K) Store listing draft.** *Files:* new `docs/store-listing.md`. Short description
+- [x] **T1.7 (K) Store listing draft.** *Files:* new `docs/store-listing.md`. Short description
   (≤132 chars), long description, single-purpose statement, one justification paragraph each for
   `storage`, `identity`, the Calendar host permission and the two content-script hosts, and the
   data-usage answers. Every claim must match `docs/privacy-policy.md`; report any mismatch
   between the policy and the code (list fixes; Opus applies them). *Doc claim check applies.*
-- [ ] **Wave 1 integration gate (O).** Full check suite green on the combined branch before the PR.
+- [x] **Wave 1 integration gate (O).** Full check suite green on the combined branch before the PR.
 
 ### Wave 2 — serial
 - [ ] **T2.1 (K) Hide Google controls without a real client id.** *Depends:* T1.3. *Files:*
