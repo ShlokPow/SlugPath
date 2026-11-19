@@ -286,7 +286,7 @@ Owner key: **O** = Opus, **K** = Haiku worker, **H** = human.
   existing placeholder check; do not duplicate it). When the built-in client id is the
   `REPLACE_ME` placeholder, render no Google button and no link/unlink section. `.ics` unaffected.
   *Verify:* existing export tests + one new test for the hidden state.
-- [ ] **T2.2 (O designs, K implements) Parser coverage batches.** *Depends:* T1.5. Repeat:
+- [x] **T2.2 (O designs, K implements) Parser coverage batches.** *Depends:* T1.5. Repeat:
   1. Opus runs `coverage:prereq`, picks **one** failure pattern, pulls 10–20 real strings for it
      from the snapshot and writes the expected ASTs. Skip any pattern that is not a real
      prerequisite (anti-requisites like "cannot receive credit for", enrollment restrictions).
@@ -362,7 +362,7 @@ _None._
 ### Metrics (no telemetry required)
 | Metric | How measured | Target |
 |---|---|---|
-| Prereq parse rate | `coverage:prereq` on the bundled snapshot | ≥70% or stop rule; record actual: ____ |
+| Prereq parse rate | `coverage:prereq` on the bundled snapshot | ≥70% or stop rule; record actual: **1814/3381 (53.7%)** after 2 batches (stop rule: top remaining non-restriction pattern covers 3 courses; 1417 of the 1567 failures are enrollment restrictions) |
 | Adapter correctness | Verbatim-capture fixture tests | 100% of captured rows parse |
 | Export correctness | `.ics` round-tripped through an independent parser | All checks pass |
 | Live smoke | §9 checklist run by the owner on real MyUCSC | All items pass before each release |

@@ -304,7 +304,8 @@ line.
 position (`sticky` (`/y`) regexes advancing a cursor, not a global scan).
 Order matters a lot — multi-word phrases (`"concurrent enrollment in"`,
 grade-minimum phrases, placement-exam-score phrases, "permission of
-instructor" phrasings) are matched *before* the plain `and`/`or` keyword
+instructor" phrasings, the Entry Level Writing requirement, language
+"placement by assessment") are matched *before* the plain `and`/`or` keyword
 matchers, because those plain matchers would otherwise consume a prefix of
 the longer phrase. Anything unrecognized falls into a catch-all `other`
 token (swallowed, ignorable) rather than aborting tokenization.
@@ -321,6 +322,9 @@ approach:
    and/or keyword, or a bare semicolon/period defaulting to attached-AND) or
    **not attached** (a bare and/or keyword with no adjacent punctuation).
    Attached = outer/looser precedence boundary; not-attached = inner/tighter.
+   One exception: a bare keyword directly *after* the Entry Level Writing
+   token counts as attached, so "ELWR and X or Y, or Z" reads
+   ELWR AND (X or Y or Z) rather than letting Z replace the writing clause.
 2. `buildTiers` groups chunks into tiers at the attached-separator
    boundaries.
 3. `combineByPrecedence` folds a tier's chunks (or the tiers themselves) by
@@ -334,7 +338,10 @@ approach:
    group, a member that fails to parse is simply dropped, since an AND
    group's meaning is unaffected by a branch you can't understand (you just
    know less about one of the independent requirements, not a stronger
-   requirement than reality).
+   requirement than reality). The drop is only allowed while a course
+   survives: a result with **no course node** that dropped a non-empty
+   clause falls back to raw text, so "THEA 157 or an equivalent ..., and
+   the ELWR" never shows up as just the writing requirement.
 5. Two narrative-stripping steps bound how much of the raw string is even
    considered: `LABEL_RE` finds where "Prerequisite(s):" actually starts
    (so leading narrative before the label is never parsed as logic), and
