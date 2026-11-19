@@ -12,6 +12,7 @@ export type TokenType =
   | 'gradePost'
   | 'orEquivalent'
   | 'permission'
+  | 'entryLevelWriting'
   | 'placementScore'
   | 'other'
 
@@ -55,6 +56,15 @@ const MATCHERS: { type: TokenType; re: RegExp; captureValue?: boolean }[] = [
   {
     type: 'permission',
     re: /by\s+(?:permission|consent)\s+of\s+(?:the\s+)?instructor|by\s+instructor\s+(?:permission|consent)|consent\s+of\s+(?:the\s+)?instructor|permission\s+of\s+(?:the\s+)?instructor|instructor\s+(?:permission|consent)/iy,
+  },
+  // Entry Level Writing requirement (a non-course "satisfaction of" constraint). The
+  // capture group is the "and Composition / and C1, C2" tail; it is only set for the
+  // Composition variant, so the parser can tell the two detail strings apart. The
+  // "equirements" alternative absorbs a real catalog typo.
+  {
+    type: 'entryLevelWriting',
+    re: /(?:satisfaction\s+of\s+)?(?:the\s+)?entry\s+level\s+writing\s+(?:requirements?\s+)?(?:requirements?|(and\s+(?:composition|c\d+(?:\s*,\s*c\d+)*)\s+(?:requirements?|equirements)))/iy,
+    captureValue: true,
   },
   // course code: 2-6 uppercase letters, optional space, 1-4 digits, optional 1-2 uppercase letter suffix
   { type: 'course', re: /[A-Z]{2,6}\s?\d{1,4}[A-Z]{0,2}\b/y, captureValue: true },
