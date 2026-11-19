@@ -680,8 +680,30 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "CHIN 6",
     "prereqRaw": "Prerequisite(s): CHIN 5 or CHIN 5H or placement by assessment, or by consent of instructor.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): CHIN 5 or CHIN 5H or placement by assessment, or by consent of instructor.",
+      "ast": {
+        "children": [
+          {
+            "code": "CHIN 5",
+            "type": "course",
+          },
+          {
+            "code": "CHIN 5H",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "placement by assessment",
+            "type": "constraint",
+          },
+          {
+            "child": null,
+            "detail": "instructor permission",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
     },
   },
   {
@@ -1599,8 +1621,21 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "FREN 114",
     "prereqRaw": "Prerequisite(s): FREN 6 or placement by assessment.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): FREN 6 or placement by assessment.",
+      "ast": {
+        "children": [
+          {
+            "code": "FREN 6",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "placement by assessment",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
     },
   },
   {
@@ -1770,8 +1805,21 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "JAPN 103",
     "prereqRaw": "Prerequisite(s): JAPN 6 or placement by assessment.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): JAPN 6 or placement by assessment.",
+      "ast": {
+        "children": [
+          {
+            "code": "JAPN 6",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "placement by assessment",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
     },
   },
   {
@@ -2451,8 +2499,25 @@ exports[`parsePrereq — fixture regression corpus > parses a 150-entry sample o
     "code": "SPAN 4",
     "prereqRaw": "Prerequisite(s): SPAN 1B or SPAN 3 or placement by assessment.",
     "result": {
-      "ok": false,
-      "raw": "Prerequisite(s): SPAN 1B or SPAN 3 or placement by assessment.",
+      "ast": {
+        "children": [
+          {
+            "code": "SPAN 1B",
+            "type": "course",
+          },
+          {
+            "code": "SPAN 3",
+            "type": "course",
+          },
+          {
+            "child": null,
+            "detail": "placement by assessment",
+            "type": "constraint",
+          },
+        ],
+        "type": "or",
+      },
+      "ok": true,
     },
   },
   {

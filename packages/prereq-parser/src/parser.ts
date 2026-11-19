@@ -204,7 +204,7 @@ function findMatchingRParen(tokens: Token[], lparenIdx: number, end: number): nu
 // shows up in a chunk's leftover, we can't safely tolerate it as ignorable filler
 // (unlike e.g. "proficiency") — silently keeping the course as a hard requirement
 // would misrepresent a recommendation as mandatory, which is worse than failing.
-const SOFT_QUALIFIER_RE = /^(?:recommended|suggested|preferred|encouraged|optional)$/i
+const SOFT_QUALIFIER_RE = /^(?:recommended|suggested|preferred|preferable|encouraged|optional)$/i
 
 function chunkHasUnsafeTrailing(tokens: Token[], start: number, end: number): boolean {
   for (let i = start; i < end; i++) {
@@ -239,6 +239,10 @@ function parseLeadingAtom(tokens: Token[], idx: number, end: number): { node: Pr
 
   if (t.type === 'placementScore') {
     return { node: { type: 'constraint', detail: `placement exam score ${t.value}+`, child: null }, next: idx + 1 }
+  }
+
+  if (t.type === 'placementAssessment') {
+    return { node: { type: 'constraint', detail: 'placement by assessment', child: null }, next: idx + 1 }
   }
 
   if (t.type === 'concurrent') {

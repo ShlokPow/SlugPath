@@ -14,6 +14,7 @@ export type TokenType =
   | 'permission'
   | 'entryLevelWriting'
   | 'placementScore'
+  | 'placementAssessment'
   | 'other'
 
 export interface Token {
@@ -50,6 +51,14 @@ const MATCHERS: { type: TokenType; re: RegExp; captureValue?: boolean }[] = [
     type: 'placementScore',
     re: /(?:a\s+)?(?:mathematics|math)\s+placement\s*(?:examination|exam|test)?\s*(?:\([A-Z]+\))?\s*score\s+of\s+(\d+)\s+or\s+higher(?:\s+or\s+higher)?/iy,
     captureValue: true,
+  },
+  // Language placement by assessment (non-course alternative): "placement by
+  // assessment", "by placement assessment", "placement assessment", and "placement
+  // into Spanish 1 via the online Spanish Placement Assessment". Math placement
+  // scores are handled by the placementScore matchers above and never reach here.
+  {
+    type: 'placementAssessment',
+    re: /placement\s+by\s+assessment|by\s+placement\s+assessment|placement\s+assessment|placement\s+into\s+[A-Za-z]+\s+\d+\s+via\s+the\s+online\s+[A-Za-z]+\s+placement\s+assessment/iy,
   },
   // "instructor permission" and its many phrasings — a very common non-course
   // alternative branch ("MATH 3 or by permission of the instructor").
