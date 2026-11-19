@@ -17,11 +17,16 @@ export interface ExportResult {
 
 const TOKEN_KEY = 'googleToken'
 
-function clientId(): string {
-  // A build without SLUGPATH_OAUTH_CLIENT_ID ships manifest.config.ts's
-  // placeholder; Google's own error for that is an opaque "invalid_client".
+// A build without SLUGPATH_OAUTH_CLIENT_ID ships manifest.config.ts's
+// placeholder; Google's own error for that is an opaque "invalid_client".
+export function googleConfigured(): boolean {
   const id = chrome.runtime.getManifest().oauth2?.client_id
-  if (!id || id.startsWith('REPLACE_ME')) {
+  return !!id && !id.startsWith('REPLACE_ME')
+}
+
+function clientId(): string {
+  const id = chrome.runtime.getManifest().oauth2?.client_id ?? ''
+  if (!googleConfigured()) {
     throw new Error(
       'Google sign-in is not configured in this build: set SLUGPATH_OAUTH_CLIENT_ID to a Google Cloud OAuth client id (Web application type) and rebuild. Use "Download .ics" instead.',
     )

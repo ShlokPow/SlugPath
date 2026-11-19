@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { googleConfigured } from '../export/googleCalendar'
 import { requestCalendarLink, requestCalendarUnlink } from '../export/messages'
 import { useSettings, useTakenCourses } from '../storage/hooks'
 import { addTakenCourse, removeTakenCourse } from '../storage/takenCourseStore'
@@ -18,7 +19,9 @@ export function Options() {
         </p>
       </section>
 
-      <GoogleCalendarSection linked={settings.calendarLinked} onLinkedChange={(calendarLinked) => setSettings({ calendarLinked })} />
+      {googleConfigured() && (
+        <GoogleCalendarSection linked={settings.calendarLinked} onLinkedChange={(calendarLinked) => setSettings({ calendarLinked })} />
+      )}
       <TakenCoursesSection />
     </main>
   )
